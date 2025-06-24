@@ -15,6 +15,10 @@ import ig_icon from './instagram_icon.png';
 import search_icon from './search_icon.png';
 import air_freshner from './RoomSpray.jpg';
 import candle_diffuser1 from './Diffuser1.png';
+import star_icon from './star.png';
+import natural_icon from './Natural.png';
+import cash_icon from './cash.png';
+import cashback_icon from './cashback.png';
 
 export const assets = {
   logo,
@@ -34,6 +38,10 @@ export const assets = {
   search_icon,
   air_freshner,
   candle_diffuser1,
+  star_icon,
+  natural_icon,
+  cash_icon,
+  cashback_icon,
 };
 
 export const products = [
@@ -68,7 +76,15 @@ export const products = [
     name: 'Earthy Candle Very Expensive',
     description: 'a simple candle that lights up',
     price: 125,
-    image: [candle_img],
+    image: [
+      candle_img,
+      candle_img,
+      candle_img,
+      candle_img,
+      candle_img,
+      candle_img,
+      candle_img,
+    ],
     category: 'Home Fragrance',
     subCategory: 'Classic Candles',
     sizes: ['S', 'M', 'L'],

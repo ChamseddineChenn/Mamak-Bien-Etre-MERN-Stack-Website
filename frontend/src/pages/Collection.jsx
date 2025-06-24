@@ -1,5 +1,6 @@
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
@@ -95,6 +96,7 @@ const Collection = () => {
     applyFilter();
     displayCollectionName();
     displayProductsCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, subCategory, search]);
 
   useEffect(() => {
@@ -104,6 +106,7 @@ const Collection = () => {
 
   useEffect(() => {
     sortCollection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortType]);
 
   {
@@ -137,7 +140,7 @@ const Collection = () => {
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
               <div className="absolute bg-transparent -left-0 -right-0 -top-10 h-10" />
-              <div className="absolute border-t border-l left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#E6E4D8]" />
+              <div className="absolute border-t border-l  left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#E6E4D8]" />
               <FlyoutContent />
             </motion.div>
           )}
