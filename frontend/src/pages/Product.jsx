@@ -9,7 +9,7 @@ const Product = () => {
   const { products, currency, addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [productImage, setProductImage] = useState('');
-  const [size, setSize] = useState('S');
+  const [size, setSize] = useState('');
   const [activeTab, setActiveTab] = useState('description');
 
   const fetchProductData = async () => {

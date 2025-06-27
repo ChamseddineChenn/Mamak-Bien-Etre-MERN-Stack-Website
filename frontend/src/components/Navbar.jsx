@@ -1,14 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { assets } from '../assets/assets.js';
 import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext.jsx';
 
 const Navbar = () => {
-  const { cartItems } = useState(ShopContext);
   const [visible, setVisible] = useState(false);
-  const [shoppingCartItemsCount, setShoppingCartItemsCount] = useState(0);
-
-  useEffect(() => {}, [cartItems]);
+  const { getCartCount } = useContext(ShopContext);
 
   return (
     <div className="fixed top-0 left-0 w-full shadow-md flex items-center justify-between ps-4 sm:ps-[5vw] pe-4 sm:pe-[5vw] ms-auto py-2 font-medium bg-[#E6E4D8] z-50">
@@ -52,7 +49,7 @@ const Navbar = () => {
         <Link to="/cart" className="relative">
           <img src={assets.cart_icon} className="w-7 min-w-7" alt="" />
           <p className="absolute right-[3px] bottom-[12px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]">
-            0
+            {getCartCount()}
           </p>
         </Link>
         <img

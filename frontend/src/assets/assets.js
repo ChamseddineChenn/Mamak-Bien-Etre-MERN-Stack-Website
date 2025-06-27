@@ -19,6 +19,9 @@ import star_icon from './star.png';
 import natural_icon from './Natural.png';
 import cash_icon from './cash.png';
 import cashback_icon from './cashback.png';
+import arrow_up_icon from './arrow-up.png';
+import arrow_down_icon from './arrow-down.png';
+import bin_icon from './bin.png';
 
 export const assets = {
   logo,
@@ -42,6 +45,9 @@ export const assets = {
   natural_icon,
   cash_icon,
   cashback_icon,
+  arrow_up_icon,
+  arrow_down_icon,
+  bin_icon,
 };
 
 export const products = [
