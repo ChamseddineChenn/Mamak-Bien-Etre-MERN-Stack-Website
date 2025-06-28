@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { products } from '../assets/assets';
 import { ShopContext } from './ShopContext';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const ShopContextProvider = (props) => {
   const currency = 'TND';
   const delivery_fee = 10;
   const [search, setSearch] = useState('');
   const [cartItems, setCartItems] = useState({});
+  const navigate = useNavigate();
 
   const addToCart = async (itemId, size) => {
     let cartData = structuredClone(cartItems);
@@ -86,6 +88,7 @@ const ShopContextProvider = (props) => {
     getCartCount,
     modifyCartItemsQuantity,
     getCartTotal,
+    navigate,
   };
 
   return (

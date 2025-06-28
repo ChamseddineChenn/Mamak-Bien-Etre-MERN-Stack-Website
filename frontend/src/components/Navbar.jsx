@@ -13,7 +13,7 @@ const Navbar = () => {
         <img src={assets.logo} className="w-36" alt="" />
       </Link>
       <ul className="hidden sm:flex gap-5 text-sm text-[#5c4b42] tinos-bold text-[16px]">
-        <NavLink to="/" className="flex flex-col items-center gap-1">
+        <NavLink to="/" className="flex flex-col items-center">
           <p>Home</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>

@@ -3,9 +3,62 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+import { motion, useAnimation } from 'framer-motion';
+
+{
+  /* Cart icon animation: vibrate a little bit when it comes into view */
+}
+const EmptyCart = () => {
+  const controls = useAnimation();
+
+  useEffect(() => {
+    controls.start({
+      x: [-5, 5, -5, 5, 0],
+      y: [-2, 2, -2, 2, 0],
+      rotate: [-3, 3, -3, 3, 0],
+      transition: {
+        duration: 1,
+        ease: 'easeInOut',
+      },
+    });
+  }, [controls]);
+
+  return (
+    <div className="flex flex-col items-center justify-center pb-30 px-6 bg-white/80 rounded-xl mt-20">
+      <div className="mb-8 w-40 h-40 justify-center">
+        <motion.img
+          src={assets.cart_icon}
+          alt="Empty cart"
+          initial={{ x: 0, y: 0, rotate: 0 }}
+          animate={controls}
+        />
+      </div>
+
+      <h3 className="text-2xl font-bold text-gray-800 mb-3 ml-5">
+        Your Cart Feels Lonely
+      </h3>
+      <p className="text-gray-500 mb-6 text-center max-w-md justify-center ml-5">
+        You haven't added anything to your cart yet. Discover our amazing
+        products!
+      </p>
+
+      <Link to="/collection">
+        <button className="w-50 min-w-30 mt-3 ml-5 px-8 py-3 bg-[#f2b67b] hover:bg-[#e8a85f] text-[#5c4b42] font-medium rounded-lg transition-colors duration-300">
+          Shop Now
+        </button>
+      </Link>
+    </div>
+  );
+};
+
+{
+  /* Start of Cart page code */
+}
 
 const Cart = () => {
-  const { products, currency, cartItems, modifyCartItemsQuantity } =
+  const { products, currency, cartItems, modifyCartItemsQuantity, navigate } =
     useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
 
@@ -131,22 +184,21 @@ const Cart = () => {
             })}
           </div>
         ) : (
-          <div>
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <span className="text-[#6c757d] text-lg font-medium mb-3">
-                Your shopping cart is empty
-              </span>
-              <button className="bg-[#A6A58A] hover:bg-[#8a8970] text-white px-5 py-1.5 text-sm transition-colors duration-200">
-                Browse Products
-              </button>
-            </div>
-          </div>
+          <EmptyCart />
         )}
       </div>
       {cartData.length ? (
         <div className="flex justify-end my-20 mx-20">
           <div className="w-full sm:w-[40vw]">
             <CartTotal />
+            <div className="w-full text-end">
+              <button
+                className="mt-5 py-2 px-5 bg-[#f2b67b] hover:bg-[#e8a85f] text-[#5c4b42] font-medium rounded-lg transition-colors duration-300"
+                onClick={() => navigate('/place-order')}
+              >
+                Proceed To Checkout
+              </button>
+            </div>
           </div>
         </div>
       ) : (
