@@ -98,9 +98,9 @@ const Cart = () => {
                     className="text-gray-700 grid grid-cols-[4fr_2fr_0.5fr] items-center gap-4 py-4"
                     key={index}
                   >
-                    <div className="flex items-start gap-6">
+                    <div className="flex items-start gap-6 ">
                       <img
-                        className="w-16 sm:w-20"
+                        className="w-16 sm:w-20 rounded"
                         src={productData.image[0]}
                         alt=""
                       />

@@ -32,7 +32,7 @@ const Product = () => {
   }, [productId, products]);
 
   return productData ? (
-    <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A]">
+    <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A] ">
       {/* Product Data div */}
       <div className="flex flex-col-reverse sm:flex-row mx-5">
         {/* Product image display */}
