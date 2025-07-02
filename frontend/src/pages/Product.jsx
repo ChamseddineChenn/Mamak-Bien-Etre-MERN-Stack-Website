@@ -3,6 +3,43 @@ import { assets } from '../assets/assets';
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
+const ProductBreadcrumbs = ({ product }) => {
+  return (
+    <nav aria-label="Breadcrumb" className="p-1">
+      <ol className="flex items-center gap-2 text-sm text-[#5C4B42]">
+        {/* Home */}
+        <li>
+          <Link to="/" className="hover:underline">
+            Home
+          </Link>
+        </li>
+        <li className="text-[#D6A7A0]">/</li>
+        <li>
+          <Link to="/collection" className="hover:underline">
+            Collection
+          </Link>
+        </li>
+        {/* Category */}
+        <li className="text-[#D6A7A0]">/</li>
+        <li>
+          <Link
+            to="/collection"
+            state={{ autoSelectCategory: product.category }} // Pass category as navigation state
+            className="hover:underline"
+          >
+            {product.category}
+          </Link>
+        </li>
+
+        {/* Current Product (non-clickable) */}
+        <li className="text-[#D6A7A0]">/</li>
+        <li className="font-medium">{product.name}</li>
+      </ol>
+    </nav>
+  );
+};
 
 const Product = () => {
   const { productId } = useParams();
@@ -24,11 +61,7 @@ const Product = () => {
 
   useEffect(() => {
     fetchProductData();
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth', // Optional: Adds smooth scrolling
-    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, products]);
 
   return productData ? (
@@ -59,6 +92,9 @@ const Product = () => {
         {/* Product Info */}
         <div className="flex-1 ">
           <div className="product-details">
+            <div className="mt-10 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A]">
+              <ProductBreadcrumbs product={productData} />
+            </div>
             {/* Product Title */}
             <h1 className="font-serif font-semibold text-4xl md:text-5xl mb-4 text-[#3A3A3A] my-5">
               {productData.name}

@@ -27,6 +27,9 @@ import bin_icon from './bin.png';
 import card_icon from './Card.png';
 import quality_icon from './Quality Products.png';
 import natural_ing_icon from './Natural Ingredients.png';
+import address_icon from './location.png';
+import phone_icon from './phone.png';
+import email_icon from './email.png';
 import customer_service_icon from './Customer Service.png';
 import contact_img from './Contact.jpg';
 
@@ -62,6 +65,9 @@ export const assets = {
   natural_ing_icon,
   customer_service_icon,
   contact_img,
+  address_icon,
+  phone_icon,
+  email_icon,
 };
 
 export const products = [

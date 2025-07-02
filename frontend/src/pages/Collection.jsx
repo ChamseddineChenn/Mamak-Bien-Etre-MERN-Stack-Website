@@ -5,6 +5,66 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
+import { Link, useLocation } from 'react-router-dom';
+
+const Breadcrumbs = ({
+  category,
+  subCategory,
+  setCategory,
+  setSubCategory,
+}) => {
+  return (
+    <nav aria-label="Breadcrumb" className="py-2 px-6">
+      <ol className="flex items-center gap-2 text-sm text-[#5C4B42]">
+        <li>
+          <div className="hover:underline">
+            <Link to="/">Home</Link>
+          </div>
+        </li>
+        {/* Collection (always clickable) */}
+        <li className="text-[#D6A7A0]">/</li>
+        <li>
+          <button
+            onClick={() => {
+              setCategory('');
+              setSubCategory('');
+            }}
+            className="hover:underline cursor-pointer"
+          >
+            Collection
+          </button>
+        </li>
+
+        {/* Category (clickable unless it's the current level) */}
+        {category && (
+          <>
+            <li className="text-[#D6A7A0]">/</li>
+            <li>
+              {subCategory ? (
+                <button
+                  onClick={() => setSubCategory('')}
+                  className="hover:underline cursor-pointer"
+                >
+                  {category}
+                </button>
+              ) : (
+                <span className="font-medium">{category}</span>
+              )}
+            </li>
+          </>
+        )}
+
+        {/* Subcategory (non-clickable, current level) */}
+        {subCategory && (
+          <>
+            <li className="text-[#D6A7A0]">/</li>
+            <li className="font-medium">{subCategory}</li>
+          </>
+        )}
+      </ol>
+    </nav>
+  );
+};
 
 const Collection = () => {
   const { products, search, setSearch } = useContext(ShopContext);
@@ -14,6 +74,15 @@ const Collection = () => {
   const [subCategory, setSubCategory] = useState('');
   const [sortType, setSortType] = useState('relavent');
   const [collectionName, setCollectionName] = useState('');
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.autoSelectCategory) {
+      setCategory(location.state.autoSelectCategory);
+      // Optional: Scroll to top when filter is applied
+      window.scrollTo(0, 0);
+    }
+  }, [location.state]);
 
   const displayChosenCategory = (cat) => {
     if (category === cat) {
@@ -98,11 +167,6 @@ const Collection = () => {
     displayProductsCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, subCategory, search]);
-
-  useEffect(() => {
-    console.log(category);
-    console.log(subCategory);
-  }, [category, subCategory]);
 
   useEffect(() => {
     sortCollection();
@@ -477,6 +541,12 @@ const Collection = () => {
             <Title primaryText={collectionName} secondaryText={'Collection'} />
             {/* Products Section */}
           </div>
+          <Breadcrumbs
+            category={category}
+            subCategory={subCategory}
+            setCategory={setCategory}
+            setSubCategory={setSubCategory}
+          />
           {/* Next Section is for the products navigation bar with the search bar & sorting selector */}
           <div className="flex flex-col sm:flex-row items-center justify-between bg-[#A6A584] h-45 sm:h-15 rounded-2xl mb-5 px-4 m-5 lg:mr-5 xl:mr-0 py-2 gap-2 sm:gap-0">
             <div className="flex items-center gap-2 w-full sm:w-auto sm:mr-auto">
