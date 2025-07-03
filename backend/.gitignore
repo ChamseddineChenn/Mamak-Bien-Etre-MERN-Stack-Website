@@ -1,0 +1,20 @@
+# Backend-specific
+/node_modules
+.env
+.env.local
+*.log
+.DS_Store
+/uploads/       
+cloudinary_uploads/ 
+/stripe-webhooks.log
+
+# MongoDB/Mongoose  
+/data/db        
+*.pid
+
+# IDE/Editor  
+.vscode/
+.idea/
+
+# Optional (backend build/output)  
+dist/      

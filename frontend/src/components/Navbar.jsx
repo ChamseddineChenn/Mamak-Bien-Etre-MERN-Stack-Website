@@ -110,46 +110,66 @@ const Navbar = () => {
       </div>
       {/* added this div for sidebar menu for small screen devices */}
       <div
-        className={`fixed top-0 right-0 bottom-0 overflow-hidden bg-white transition-all z-10 ${
-          visible ? 'w-full' : 'w-0'
+        className={`fixed inset-0 bg-transparent z-50 transition-all duration-300 ease-in-out transform ${
+          visible ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col text-[#5c4b42] z-10">
-          <div
+        {/* Overlay close area (click outside to close) */}
+        <div
+          className="absolute inset-0 bg-transparent bg-opacity-10"
+          onClick={() => setVisible(false)}
+        />
+
+        {/* Menu content */}
+        <div className="relative w-4/5 max-w-sm h-full bg-white shadow-xl ml-auto">
+          {/* Close button */}
+          <button
             onClick={() => setVisible(false)}
-            className="flex items-center gap-4 p-3 cursor-pointer"
+            className="flex items-center gap-3 p-4 text-[#5c4b42] hover:bg-[#F5F0EB] w-full transition-colors"
+            aria-label="Close menu"
           >
-            <img className="h-4 rotate-180" src={assets.back_icon} alt="" />
-            <p>Back</p>
+            <img
+              className="h-4 rotate-180"
+              src={assets.back_icon}
+              alt=""
+              aria-hidden="true"
+            />
+            <span className="font-medium">Menu</span>
+          </button>
+
+          {/* Navigation links */}
+          <nav className="flex flex-col mt-2">
+            {[
+              { path: '/', label: 'Home' },
+              { path: '/collection', label: 'Collection' },
+              { path: '/about', label: 'About' },
+              { path: '/contact', label: 'Contact' },
+            ].map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                onClick={() => setVisible(false)}
+                className={({ isActive }) =>
+                  `py-3 px-6 border-b border-[#E8D9CC] text-[#5c4b42] transition-colors ${
+                    isActive ? 'bg-[#F5F0EB] font-medium' : 'hover:bg-[#F9F5F2]'
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Optional: Additional menu items */}
+          <div className="absolute bottom-0 w-full p-4 border-t border-[#C79790]">
+            <NavLink
+              to="/login"
+              className="block py-2 text-center text-[#D6A7A0] hover:text-[#C79790]/50 transition-colors"
+              onClick={() => setVisible(false)}
+            >
+              Login
+            </NavLink>
           </div>
-          <NavLink
-            onClick={() => setVisible(false)}
-            className="py-2 pl-6 border"
-            to="/"
-          >
-            Home
-          </NavLink>
-          <NavLink
-            onClick={() => setVisible(false)}
-            className="py-2 pl-6 border"
-            to="/collection"
-          >
-            Collection
-          </NavLink>
-          <NavLink
-            onClick={() => setVisible(false)}
-            className="py-2 pl-6 border"
-            to="/about"
-          >
-            About
-          </NavLink>
-          <NavLink
-            onClick={() => setVisible(false)}
-            className="py-2 pl-6 border"
-            to="/contact"
-          >
-            Contact
-          </NavLink>
         </div>
       </div>
     </div>
