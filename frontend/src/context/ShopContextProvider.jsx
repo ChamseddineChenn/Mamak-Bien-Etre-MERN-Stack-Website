@@ -11,68 +11,40 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
   const navigate = useNavigate();
 
-  const addToCart = async (itemId, size) => {
-    let cartData = structuredClone(cartItems);
-
-    if (!size) {
-      toast.error('Product size was not selected, please choose one!');
-      return;
-    }
-    if (cartData[itemId]) {
-      if (cartData[itemId][size]) {
-        cartData[itemId][size] += 1;
-      } else {
-        cartData[itemId][size] = 1;
-      }
-    } else {
-      cartData[itemId] = {};
-      cartData[itemId][size] = 1;
-    }
-    setCartItems(cartData);
-    toast.success('Item added to cart! feel free to continue shopping!');
+  const addToCart = (itemId) => {
+    setCartItems((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 0) + 1,
+    }));
+    toast.success('Item added to cart!');
   };
 
   const getCartCount = () => {
-    let cartItemsTotalCount = 0;
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        try {
-          if (cartItems[items][item] > 0) {
-            cartItemsTotalCount += cartItems[items][item];
-          }
-        } catch (error) {
-          console.log(
-            `Error when trying to count Shopping Cart total items: ${error}`
-          );
-        }
-      }
-    }
-    return cartItemsTotalCount;
+    return Object.values(cartItems).reduce(
+      (count, quantity) => count + quantity,
+      0
+    );
   };
 
-  const modifyCartItemsQuantity = async (itemId, size, quantity) => {
-    let cartData = structuredClone(cartItems);
-    cartData[itemId][size] = quantity;
-    setCartItems(cartData);
+  const modifyCartItemsQuantity = (itemId, quantity) => {
+    setCartItems((prev) => {
+      const newCartItems = { ...prev };
+      if (quantity <= 0) {
+        delete newCartItems[itemId];
+      } else {
+        newCartItems[itemId] = quantity;
+      }
+      return newCartItems;
+    });
   };
 
   const getCartTotal = () => {
-    let totalCount = 0;
-    for (const items in cartItems) {
-      let itemInfo = products.find((product) => product._id === items);
-      for (const item in cartItems[items]) {
-        try {
-          if (cartItems[items][item] > 0) {
-            totalCount += itemInfo.price * cartItems[items][item];
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    }
-    console.log(totalCount);
-    return totalCount;
+    return Object.entries(cartItems).reduce((total, [itemId, quantity]) => {
+      const itemInfo = products.find((product) => product._id === itemId);
+      return itemInfo ? total + itemInfo.price * quantity : total;
+    }, 0);
   };
+
   useEffect(() => {
     console.log(cartItems);
   }, [cartItems]);

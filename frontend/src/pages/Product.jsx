@@ -46,7 +46,6 @@ const Product = () => {
   const { products, currency, addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [productImage, setProductImage] = useState('');
-  const [size, setSize] = useState('');
   const [activeTab, setActiveTab] = useState('description');
 
   const fetchProductData = async () => {
@@ -130,32 +129,10 @@ const Product = () => {
               {productData.description}
             </p>
 
-            {/* Size Selector */}
-            <div className="mb-10">
-              <p className="text-sm uppercase tracking-wider mb-3 text-gray-600">
-                Select Size
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {productData.sizes.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setSize(item)}
-                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                      item === size
-                        ? 'bg-[#5C4B42] text-white border border-[#5C4B42]'
-                        : 'bg-[#F5F0EB] text-[#5C4B42] hover:bg-[#E8D9CC] border border-transparent'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Add to Cart */}
             <button
               className="w-full sm:w-auto bg-[#D6A7A0] hover:bg-[#C79790] text-white px-8 py-4 rounded-full font-medium mb-10 transition-colors shadow-sm hover:shadow-md"
-              onClick={() => addToCart(productData._id, size)}
+              onClick={() => addToCart(productData._id)}
             >
               Add to Cart
             </button>

@@ -4,6 +4,7 @@ import {
   removeProduct,
   displayProducts,
   productDetails,
+  editProduct,
 } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
@@ -14,13 +15,25 @@ productRouter.post(
   '/addProduct',
   adminAuth,
   upload.fields([
-    { name: 'firstImage', maxCount: 1 },
-    { name: 'secondImage', maxCount: 1 },
-    { name: 'thirdImage', maxCount: 1 },
-    { name: 'fourthImage', maxCount: 1 },
-    { name: 'fifthImage', maxCount: 1 },
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 },
+    { name: 'image4', maxCount: 1 },
+    { name: 'image5', maxCount: 1 },
   ]),
   addProduct
+);
+productRouter.put(
+  '/editProduct',
+  adminAuth,
+  upload.fields([
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 },
+    { name: 'image4', maxCount: 1 },
+    { name: 'image5', maxCount: 1 },
+  ]),
+  editProduct
 );
 productRouter.post('/removeProduct', adminAuth, removeProduct);
 productRouter.get('/displayProducts', adminAuth, displayProducts);

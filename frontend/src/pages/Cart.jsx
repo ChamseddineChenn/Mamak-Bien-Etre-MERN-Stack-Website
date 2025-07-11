@@ -63,21 +63,11 @@ const Cart = () => {
   const [cartData, setCartData] = useState([]);
 
   useEffect(() => {
-    const tempData = [];
-
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        if (cartItems[items][item] > 0) {
-          tempData.push({
-            _id: items,
-            size: item,
-            quantity: cartItems[items][item],
-          });
-        }
-      }
-    }
+    const tempData = Object.entries(cartItems).map(([itemId, quantity]) => ({
+      _id: itemId,
+      quantity,
+    }));
     setCartData(tempData);
-    console.log(tempData);
   }, [cartItems]);
 
   return (
@@ -92,13 +82,12 @@ const Cart = () => {
               const productData = products.find(
                 (product) => product._id === item._id
               );
+
               return (
-                <div className="flex flex-col mx-20">
-                  <div
-                    className="text-gray-700 grid grid-cols-[4fr_2fr_0.5fr] items-center gap-4 py-4"
-                    key={index}
-                  >
-                    <div className="flex items-start gap-6 ">
+                <div className="flex flex-col mx-20" key={index}>
+                  <div className="text-gray-700 grid grid-cols-[4fr_2fr_0.5fr] items-center gap-4 py-4">
+                    {/* Product info */}
+                    <div className="flex items-start gap-6">
                       <img
                         className="w-16 sm:w-20 rounded"
                         src={productData.image[0]}
@@ -110,14 +99,13 @@ const Cart = () => {
                         </p>
                         <div className="flex items-center gap-5 mt-2">
                           <p>
-                            {currency} {productData.price}
-                          </p>
-                          <p className="px-2 sm:px-3 sm:py-1 border bg-slate-50">
-                            {item.size}
+                            {currency} {productData.price.toFixed(2)}
                           </p>
                         </div>
                       </div>
                     </div>
+
+                    {/* Quantity controls */}
                     <div className="flex items-center">
                       <button>
                         <img
@@ -125,15 +113,13 @@ const Cart = () => {
                           src={assets.arrow_up_icon}
                           onClick={() => {
                             if (item.quantity > 1) {
-                              const newQuantityInput = item.quantity - 1;
                               modifyCartItemsQuantity(
                                 item._id,
-                                item.size,
-                                newQuantityInput
+                                item.quantity - 1
                               );
                             }
                           }}
-                          alt=""
+                          alt="Decrease quantity"
                         />
                       </button>
                       <input
@@ -143,13 +129,8 @@ const Cart = () => {
                         value={item.quantity}
                         onChange={(e) => {
                           const value = Number(e.target.value);
-
                           if (!isNaN(value) && value >= 1) {
-                            modifyCartItemsQuantity(
-                              item._id,
-                              item.size,
-                              Number(e.target.value)
-                            );
+                            modifyCartItemsQuantity(item._id, value);
                           }
                         }}
                       />
@@ -158,24 +139,22 @@ const Cart = () => {
                           className="min-w-5 w-5 min-h-5 h-5 cursor-pointer rotate-90"
                           src={assets.arrow_up_icon}
                           onClick={() => {
-                            const newQuantityInput = item.quantity + 1;
                             modifyCartItemsQuantity(
                               item._id,
-                              item.size,
-                              newQuantityInput
+                              item.quantity + 1
                             );
                           }}
-                          alt=""
+                          alt="Increase quantity"
                         />
                       </button>
                     </div>
+
+                    {/* Delete button */}
                     <img
                       className="w-4 mr-[16vw] sm:w-5 cursor-pointer"
                       src={assets.bin_icon}
-                      onClick={() =>
-                        modifyCartItemsQuantity(item._id, item.size, 0)
-                      }
-                      alt="delete cart entry"
+                      onClick={() => modifyCartItemsQuantity(item._id, 0)}
+                      alt="Remove item"
                     />
                   </div>
                   <span className="w-[75vw] border-b border-[#A6A58A] rounded-2xl"></span>

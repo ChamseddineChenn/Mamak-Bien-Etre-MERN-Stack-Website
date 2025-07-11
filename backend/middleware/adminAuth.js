@@ -4,15 +4,16 @@ const adminAuth = async (req, res, next) => {
   try {
     const { token } = req.headers;
     if (!token) {
-      return res.json({ success: false, message: 'Unathorized Access.' });
+      return res.json({ success: false, message: 'Unauthorized Access.' });
     }
+    const adminstrator_Id = process.env.ADMIN_EMAIL + process.env.ADMIN_PASS;
     const token_decode = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (token_decode !== process.env.ADMIN_EMAIL + process.env.ADMIN_PASS);
-    {
+    if (token_decode !== adminstrator_Id) {
+      const comparison = token_decode + '/' + adminstrator_Id;
       return res.json({
         success: false,
-        message: 'Unauthorized Access, please refrain from trying again.',
+        message: { comparison },
       });
     }
     next();

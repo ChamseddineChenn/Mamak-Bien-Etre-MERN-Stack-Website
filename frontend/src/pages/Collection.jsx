@@ -573,7 +573,7 @@ const Collection = () => {
                 name="Order by:"
                 id=""
               >
-                <option value="relavent">Sort By: Relavent</option>
+                z<option value="relavent">Sort By: Relavent</option>
                 <option value="low-high">Sort By: Low to High Price</option>
                 <option value="high-low">Sort By: High to Low Price</option>
               </select>
