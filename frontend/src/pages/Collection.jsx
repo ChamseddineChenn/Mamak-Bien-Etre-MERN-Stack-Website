@@ -76,14 +76,6 @@ const Collection = () => {
   const [collectionName, setCollectionName] = useState('');
   const location = useLocation();
 
-  useEffect(() => {
-    if (location.state?.autoSelectCategory) {
-      setCategory(location.state.autoSelectCategory);
-      // Optional: Scroll to top when filter is applied
-      window.scrollTo(0, 0);
-    }
-  }, [location.state]);
-
   const displayChosenCategory = (cat) => {
     if (category === cat) {
       setCategory('');
@@ -162,16 +154,24 @@ const Collection = () => {
   };
 
   useEffect(() => {
+    if (location.state?.autoSelectCategory) {
+      setCategory(location.state.autoSelectCategory);
+      // Optional: Scroll to top when filter is applied
+      window.scrollTo(0, 0);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     applyFilter();
     displayCollectionName();
     displayProductsCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, subCategory, search]);
+  }, [category, subCategory, search, products]);
 
   useEffect(() => {
     sortCollection();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortType]);
+  }, [sortType, products]);
 
   {
     /* Flyout tag */

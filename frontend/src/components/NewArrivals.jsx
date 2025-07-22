@@ -8,7 +8,8 @@ const NewArrivals = () => {
   const [NewArrivals, setNewArrivals] = useState([]);
 
   useEffect(() => {
-    setNewArrivals(products.slice(0, 10));
+    const newProducts = products.filter((item) => item.newArrival);
+    setNewArrivals(newProducts.slice(0, 5));
   }, [products]);
 
   return (

@@ -36,7 +36,7 @@ productRouter.put(
   editProduct
 );
 productRouter.post('/removeProduct', adminAuth, removeProduct);
-productRouter.get('/displayProducts', adminAuth, displayProducts);
+productRouter.get('/displayProducts', displayProducts);
 productRouter.post('/productDetails', adminAuth, productDetails);
 
 export default productRouter;

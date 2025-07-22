@@ -23,7 +23,11 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       const token = createToken(user._id);
-      res.json({ success: true, token });
+      res.json({
+        success: true,
+        message: 'Login successful, welcome back!',
+        token,
+      });
     } else {
       res.json({
         success: false,
@@ -40,27 +44,35 @@ const loginUser = async (req, res) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password, confirmPassword } = req.body;
 
     // Check for user already exists
-    const userExists = await userModel.findOne({ email });
-
-    if (userExists) {
-      return res.json({ success: false, message: 'User already exists!' });
-    }
+    const sanitizedEmail = validator.normalizeEmail(validator.trim(email));
+    const sanitizedFullName = validator.escape(validator.trim(fullName));
 
     // Validating email format & strong password
-    if (!validator.isEmail(email)) {
+    if (!validator.isEmail(sanitizedEmail)) {
       return res.json({
         success: false,
         message: 'Please enter a valid email!',
       });
     }
+
+    const userExists = await userModel.findOne({ email: sanitizedEmail });
+
+    if (userExists) {
+      return res.json({ success: false, message: 'User already exists!' });
+    }
+
     if (password.length < 8) {
       return res.json({
         success: false,
         message: 'Please enter a strong password of at least 8 characters!',
       });
+    }
+
+    if (password !== confirmPassword) {
+      return res.json({ success: false, message: 'Passwords do not match!' });
     }
 
     //Hashing user password after validation
@@ -69,8 +81,8 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new userModel({
-      fullName,
-      email,
+      fullName: sanitizedEmail,
+      email: sanitizedFullName,
       password: hashedPassword,
     });
 
