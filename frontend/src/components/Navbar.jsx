@@ -7,11 +7,33 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
-  const { getCartCount, navigate } = useContext(ShopContext);
+  const {
+    navigate,
+    token,
+    setToken,
+    cartItems,
+    setCartItems,
+    getCartCount,
+    getCartTotal,
+    products,
+    currency,
+  } = useContext(ShopContext);
 
-  const FlyoutLink = ({ children, path, FlyoutContent }) => {
+  const logout = () => {
+    navigate('/login');
+    localStorage.removeItem('token');
+    setToken('');
+    setCartItems({});
+  };
+
+  const FlyoutLink = ({
+    children,
+    path,
+    FlyoutContent,
+    requiresToken = true,
+  }) => {
     const [open, setOpen] = useState(false);
-    const showFlyout = open && FlyoutContent;
+    const showFlyout = open && FlyoutContent && (requiresToken ? token : true);
 
     return (
       <div
@@ -20,19 +42,21 @@ const Navbar = () => {
         className="relative h-fit w-fit"
       >
         <button
-          className="elative text-[#3A3A3A]"
+          className="relative text-[#3A3A3A]"
           onClick={() => navigate(path)}
         >
           {children}
-          <span
-            className="absolute -bottom-2 -left-2 -right-2 h-0.5 rounded-full bg-[#C4A484] transition-transform duration-300 ease-out"
-            style={{ transform: open ? 'scaleX(1)' : 'scaleX(0)' }}
-          ></span>
+          {showFlyout && (
+            <span
+              className="absolute -bottom-2 -left-2 -right-2 h-0.5 rounded-full bg-[#C4A484] transition-transform duration-300 ease-out"
+              style={{ transform: open ? 'scaleX(1)' : 'scaleX(0)' }}
+            ></span>
+          )}
         </button>
         <AnimatePresence>
           {showFlyout && (
             <motion.div
-              className="absolute left-1/2 top-17 md:top-15"
+              className="absolute left-1/2 top-17 md:top-15 z-50"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
@@ -40,7 +64,7 @@ const Navbar = () => {
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
               <div className="absolute bg-transparent -left-0 -right-0 -top-10 h-10" />
-              <div className="absolute border-t border-l  left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#E6E4D8]" />
+              <div className="absolute border-t border-l left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#E6E4D8]" />
               <FlyoutContent />
             </motion.div>
           )}
@@ -53,9 +77,93 @@ const Navbar = () => {
     return (
       <div className="bg-[#E6E4D8] border rounded-xl">
         <div className="flex flex-col  gap-2 w-36 py-3 px-5 text-[#3A3A3A]">
-          <p className="cursor-pointer hover:text-black">My Profile</p>
-          <p className="cursor-pointer hover:text-black">Orders</p>
-          <p className="cursor-pointer hover:text-black">Logout</p>
+          <p
+            className="cursor-pointer hover:text-black"
+            onClick={() => navigate('/profile')}
+          >
+            My Profile
+          </p>
+          <p
+            className="cursor-pointer hover:text-black"
+            onClick={() => navigate('/orders')}
+          >
+            Orders
+          </p>
+          <p className="cursor-pointer hover:text-black" onClick={logout}>
+            Logout
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const CartContent = () => {
+    // Create an array of cart items with product details
+    const cartItemsArray = Object.entries(cartItems)
+      .map(([itemId, quantity]) => {
+        // Find the product in the products array
+        const product = products.find((p) => p._id === itemId);
+        if (!product) return null;
+
+        return {
+          id: itemId,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity,
+        };
+      })
+      .filter((item) => item !== null); // Remove any items that couldn't be found
+
+    return (
+      <div className="bg-[#E6E4D8] border rounded-xl w-72">
+        <div className="flex flex-col gap-4 p-4">
+          {cartItemsArray.length === 0 ? (
+            <p className="text-center text-[#3A3A3A]">Your cart is empty</p>
+          ) : (
+            <>
+              <div className="max-h-60 overflow-y-auto pr-2">
+                {cartItemsArray.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-3 border-b border-[#C4A484]/30 py-3"
+                  >
+                    <img
+                      src={item.image}
+                      className="w-12 h-12 object-cover rounded"
+                      alt={item.name}
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm text-[#3A3A3A] overfl">
+                        {item.name}
+                      </h4>
+                      <p className="text-xs text-[#3A3A3A]/80">
+                        {currency}
+                        {item.price} x {item.quantity}
+                      </p>
+                    </div>
+                    <p className="font-medium text-sm">
+                      {currency}
+                      {(item.price * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between font-medium text-[#3A3A3A]">
+                <span>Subtotal</span>
+                <span>
+                  {currency}
+                  {getCartTotal().toFixed(2)}
+                </span>
+              </div>
+              <button
+                className="bg-[#C4A484] text-white py-2 rounded-lg hover:bg-[#B08E6B] transition-colors"
+                onClick={() => navigate('/cart')}
+              >
+                View Cart
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -84,9 +192,24 @@ const Navbar = () => {
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>
       </ul>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8 ">
+        <FlyoutLink
+          className="relative"
+          path={'/cart'}
+          FlyoutContent={CartContent}
+          requiresToken={false}
+        >
+          <img src={assets.cart_icon} className="w-7 min-w-7" alt="" />
+          <p className="absolute right-[3px] bottom-[12px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]">
+            {getCartCount()}
+          </p>
+        </FlyoutLink>
         <div className="group relative z-5">
-          <FlyoutLink path={'/login'} FlyoutContent={() => ProfileContent()}>
+          <FlyoutLink
+            path={token ? '/profile' : '/login'}
+            FlyoutContent={ProfileContent}
+            requiresToken={true}
+          >
             <img
               src={assets.login_icon}
               className="w-7 min-w-7 cursor-pointer"
@@ -95,12 +218,6 @@ const Navbar = () => {
           </FlyoutLink>
         </div>
 
-        <Link to="/cart" className="relative">
-          <img src={assets.cart_icon} className="w-7 min-w-7" alt="" />
-          <p className="absolute right-[3px] bottom-[12px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]">
-            {getCartCount()}
-          </p>
-        </Link>
         <img
           onClick={() => setVisible(true)}
           src={assets.menu_icon}

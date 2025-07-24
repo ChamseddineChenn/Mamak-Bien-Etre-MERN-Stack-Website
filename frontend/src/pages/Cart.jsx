@@ -58,8 +58,14 @@ const EmptyCart = () => {
 }
 
 const Cart = () => {
-  const { products, currency, cartItems, modifyCartItemsQuantity, navigate } =
-    useContext(ShopContext);
+  const {
+    products,
+    currency,
+    cartItems,
+    modifyCartItemsQuantity,
+    navigate,
+    isCartLoading,
+  } = useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
 
   useEffect(() => {
@@ -76,12 +82,21 @@ const Cart = () => {
         <Title primaryText={'Shopping'} secondaryText={'Cart'} />
       </div>
       <div>
-        {cartData.length ? (
+        {isCartLoading ? (
+          // Loading spinner
+          <div className="flex justify-center items-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-[#A6A58A]"></div>
+          </div>
+        ) : cartData.length ? (
+          // Cart items list
           <div className="flex flex-col minh-20 mx-20">
             {cartData.map((item, index) => {
               const productData = products.find(
                 (product) => product._id === item._id
               );
+
+              // Add null check for productData
+              if (!productData) return null;
 
               return (
                 <div className="flex flex-col mx-20" key={index}>
@@ -91,7 +106,7 @@ const Cart = () => {
                       <img
                         className="w-16 sm:w-20 rounded"
                         src={productData.image[0]}
-                        alt=""
+                        alt={productData.name}
                       />
                       <div>
                         <p className="text-sm sm:text-lg font-medium">
@@ -163,6 +178,7 @@ const Cart = () => {
             })}
           </div>
         ) : (
+          // Empty cart
           <EmptyCart />
         )}
       </div>

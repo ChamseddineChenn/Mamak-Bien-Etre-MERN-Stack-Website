@@ -5,7 +5,7 @@ import { ShopContext } from '../context/ShopContext';
 
 const Login = () => {
   // State management
-  const [currentState, setCurrentState] = useState('Sign Up');
+  const [currentState, setCurrentState] = useState('Login');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -36,6 +36,7 @@ const Login = () => {
   // Redirect if authenticated
   useEffect(() => {
     if (token) navigate('/');
+    // insert the mergeCart function here ? but how ?
   }, [token, navigate]);
 
   useEffect(() => {
