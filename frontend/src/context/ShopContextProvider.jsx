@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const axiosInstance = axios.create();
+
 const ShopContextProvider = (props) => {
   const currency = 'TND';
   const delivery_fee = 10;
@@ -13,7 +15,6 @@ const ShopContextProvider = (props) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState('');
-  const [backendCart, setBackendCart] = useState(null);
   const [isCartLoading, setIsCartLoading] = useState(true);
 
   // ALL DATA RELATED TO PRODUCTS
@@ -32,98 +33,153 @@ const ShopContextProvider = (props) => {
     }
   }, [backendURL]); //  Add backendURL dependency
 
-  useEffect(() => {
-    getProductsData();
-  }, [getProductsData]); //  Only depends on getProductsData (which is memoized)
+  //  Only depends on getProductsData (which is memoized)
 
   // ALL DATA RELATED TO CART
   // Fetch cart data
   const fetchCart = useCallback(async () => {
     try {
       setIsCartLoading(true);
-      const response = await axios.get(`${backendURL}/api/cart/getCartData`, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await axiosInstance.get(
+        `${backendURL}/api/cart/getCartData`,
+        {
+          withCredentials: true, // Sends cookies automatically
+        }
+      );
 
       if (response.data.success) {
-        setBackendCart(response.data.cart);
-
-        // Convert to cartItems format
         const itemsMap = {};
         response.data.cart?.items?.forEach((item) => {
-          itemsMap[item.productId._id] = item.quantity;
+          if (item.productId && item.productId._id) {
+            itemsMap[item.productId._id] = item.quantity;
+          }
         });
-
         setCartItems(itemsMap);
-
-        // Save to localStorage for persistence
-        localStorage.setItem('cartItems', JSON.stringify(itemsMap));
       }
     } catch (error) {
       console.error('Cart fetch error:', error);
-      // Try to load from localStorage if fetch fails
-      const savedCart = localStorage.getItem('cartItems');
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
-      }
     } finally {
       setIsCartLoading(false);
     }
-  }, [backendURL, token]);
+  }, [backendURL]);
 
-  // Enhanced useEffect with token dependency
-  useEffect(() => {
-    // Load from localStorage on initial mount
-    const savedCart = localStorage.getItem('cartItems');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-
-    // Then fetch fresh data from backend
-    fetchCart();
-  }, [fetchCart]);
-
-  // New: Refresh cart when token changes (login/logout)
-  useEffect(() => {
-    if (token || !token) {
-      // Trigger on any token change
-      fetchCart();
-    }
-  }, [token, fetchCart]);
-
-  // Memoize cart functions
+  // Add item to cart
   const addToCart = useCallback(
     async (itemId, quantity = 1) => {
       try {
-        const response = await axios.post(
+        const response = await axiosInstance.post(
           `${backendURL}/api/cart/addToCart`,
           { productId: itemId, quantity },
-          {
-            withCredentials: true,
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          }
+          { withCredentials: true }
         );
 
-        if (response.data.success) {
-          setBackendCart(response.data.cart);
+        // Handle stock limitation response
 
-          // Update local cart state
-          const newCartItems = { ...cartItems };
-          newCartItems[itemId] = (newCartItems[itemId] || 0) + quantity;
-          setCartItems(newCartItems);
-          localStorage.setItem('cartItems', JSON.stringify(newCartItems));
+        if (response.data.success === false) {
+          toast.warning(response.data.message);
 
-          toast.success('Item added to cart!');
+          // Add maximum allowed quantity if specified
+          if (response.data.maxAllowed >= 0) {
+            await axiosInstance.post(
+              `${backendURL}/api/cart/addToCart`,
+              { productId: itemId, quantity: response.data.maxAllowed },
+              { withCredentials: true }
+            );
+          }
+
+          // Refetch cart to update UI
+          fetchCart();
+          return;
         }
+
+        setCartItems((prev) => ({
+          ...prev,
+          [itemId]: (prev[itemId] || 0) + quantity,
+        }));
+
+        toast.success('Item added to cart!');
       } catch (error) {
         const errorMessage =
           error.response?.data?.message || 'Failed to add to cart';
         toast.error(errorMessage);
       }
     },
-    [backendURL, token, cartItems]
+    [backendURL, fetchCart]
   );
+
+  // Update cart items
+  const updateCartItemQuantity = useCallback(
+    async (itemId, newQuantity) => {
+      try {
+        const response = await axiosInstance.put(
+          `${backendURL}/api/cart/updateCartItem`,
+          { productId: itemId, quantity: newQuantity },
+          { withCredentials: true }
+        );
+
+        // Always handle the response message
+        if (response.data.message) {
+          if (response.data.success) {
+            toast.success(response.data.message);
+          } else {
+            toast.warning(response.data.message);
+          }
+        }
+
+        if (response.data.success) {
+          setCartItems((prev) => {
+            const updatedItems = { ...prev };
+            if (newQuantity <= 0) {
+              delete updatedItems[itemId];
+            } else {
+              updatedItems[itemId] = newQuantity;
+            }
+            return updatedItems;
+          });
+        }
+
+        return response.data;
+      } catch (error) {
+        // Handle network/server errors
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          'Failed to update item';
+        toast.error(errorMessage);
+        fetchCart();
+        throw error;
+      }
+    },
+    [backendURL, fetchCart]
+  );
+
+  // Merge cart using session id with loggedin user
+  const mergeCarts = useCallback(async () => {
+    try {
+      const response = await axiosInstance.post(
+        `${backendURL}/api/cart/mergeCarts`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        // Update local cart state
+        const itemsMap = {};
+        response.data.cart.items.forEach((item) => {
+          if (item.productId && item.productId._id) {
+            itemsMap[item.productId._id] = item.quantity;
+          }
+        });
+        setCartItems(itemsMap);
+
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Merge carts failed:', error);
+      return false;
+    }
+  }, [backendURL]);
 
   const getCartCount = useCallback(() => {
     return Object.values(cartItems).reduce(
@@ -132,18 +188,6 @@ const ShopContextProvider = (props) => {
     );
   }, [cartItems]);
 
-  const modifyCartItemsQuantity = useCallback((itemId, quantity) => {
-    setCartItems((prev) => {
-      const newCartItems = { ...prev };
-      if (quantity <= 0) {
-        delete newCartItems[itemId];
-      } else {
-        newCartItems[itemId] = quantity;
-      }
-      return newCartItems;
-    });
-  }, []);
-
   const getCartTotal = useCallback(() => {
     return Object.entries(cartItems).reduce((total, [itemId, quantity]) => {
       const itemInfo = products.find((product) => product._id === itemId);
@@ -151,7 +195,59 @@ const ShopContextProvider = (props) => {
     }, 0);
   }, [cartItems, products]);
 
-  // 3. Memoize context value
+  // Use Effect functions are ALL here
+
+  // Fetch products
+
+  useEffect(() => {
+    getProductsData();
+  }, [getProductsData]);
+
+  // Better handling of token
+
+  useEffect(() => {
+    const requestInterceptor = axiosInstance.interceptors.request.use(
+      (config) => {
+        const authToken = token || localStorage.getItem('token');
+        if (authToken) {
+          config.headers['token'] = authToken;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const responseInterceptor = axiosInstance.interceptors.response.use(
+      (response) => {
+        // Check if we need to clear token
+        if (response.headers['clear-token'] === 'true') {
+          localStorage.removeItem('token');
+          setToken('');
+        }
+        return response;
+      },
+      (error) => {
+        // Handle 401 Unauthorized
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          setToken('');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axiosInstance.interceptors.request.eject(requestInterceptor);
+      axiosInstance.interceptors.response.eject(responseInterceptor);
+    };
+  }, [token]);
+
+  // Refresh cart when token changes (login/logout)
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // Memoize context value
   const value = useMemo(
     () => ({
       products,
@@ -163,7 +259,8 @@ const ShopContextProvider = (props) => {
       setCartItems,
       addToCart,
       getCartCount,
-      modifyCartItemsQuantity,
+      updateCartItemQuantity,
+      mergeCarts,
       getCartTotal,
       navigate,
       backendURL,
@@ -177,7 +274,8 @@ const ShopContextProvider = (props) => {
       cartItems,
       addToCart,
       getCartCount,
-      modifyCartItemsQuantity,
+      updateCartItemQuantity,
+      mergeCarts,
       getCartTotal,
       navigate,
       backendURL,

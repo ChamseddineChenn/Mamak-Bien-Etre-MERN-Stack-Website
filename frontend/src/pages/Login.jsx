@@ -17,7 +17,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Context
-  const { token, setToken, navigate, backendURL } = useContext(ShopContext);
+  const { token, setToken, navigate, mergeCarts, backendURL } =
+    useContext(ShopContext);
 
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,6 +37,8 @@ const Login = () => {
   // Redirect if authenticated
   useEffect(() => {
     if (token) navigate('/');
+    console.log('token :' + token);
+
     // insert the mergeCart function here ? but how ?
   }, [token, navigate]);
 
@@ -129,6 +132,7 @@ const Login = () => {
         const authToken = response.data.token;
         setToken(authToken);
         localStorage.setItem('token', authToken);
+        mergeCarts();
         toast.success(
           currentState === 'Sign Up'
             ? 'Registration successful!'

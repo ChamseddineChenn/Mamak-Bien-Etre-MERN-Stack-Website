@@ -3,14 +3,16 @@ import Product from '../models/productModel.js';
 
 // Helper to get cart for user/session
 const getCart = async (userId, sessionId) => {
-  if (userId) {
-    // For logged-in users: find by user ID
-    return await Cart.findOne({ user: userId }).populate('items.productId');
-  } else {
-    // For guests: find by session ID
-    return await Cart.findOne({ sessionId: sessionId }).populate(
-      'items.productId'
-    );
+  try {
+    if (userId) {
+      return await Cart.findOne({ user: userId }).populate('items.productId'); // Keep this as is
+    } else if (sessionId) {
+      return await Cart.findOne({ sessionId }).populate('items.productId'); // Keep this as is
+    }
+    return null;
+  } catch (error) {
+    console.error('Get cart error:', error);
+    return null;
   }
 };
 
@@ -18,7 +20,7 @@ const getCart = async (userId, sessionId) => {
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     const sessionId = req.sessionId;
 
     // 1. Validate input
@@ -38,19 +40,33 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // 3. Check stock availability
-    if (product.quantity < quantity) {
-      return res.status(400).json({
+    console.log('user: ' + userId + '/' + 'session: ' + sessionId);
+    // 3. Find existing cart
+    let cart = await getCart(userId, sessionId);
+    let totalRequestedQty = quantity;
+    let existingItem = null;
+
+    if (cart) {
+      existingItem = cart.items.find((item) =>
+        item.productId._id.equals(productId)
+      );
+      if (existingItem) {
+        totalRequestedQty += existingItem.quantity;
+      }
+    }
+
+    // 5. Validate against stock - MOVED OUTSIDE OF ELSE BLOCK
+    if (product.quantity < totalRequestedQty) {
+      const available =
+        product.quantity - (existingItem ? existingItem.quantity : 0);
+      return res.status(200).json({
         success: false,
-        message: `Only ${product.quantity} items available in stock`,
+        message: `Only ${available} items available in stock`,
+        maxAllowed: available,
       });
     }
 
-    console.log('user: ' + userId + '/' + 'session: ' + sessionId);
-    // 4. Find existing cart
-    let cart = await getCart(userId, sessionId);
-
-    // 5. Create new cart if doesn't exist
+    // 6. Create new cart if doesn't exist
     if (!cart) {
       cart = new Cart({
         user: userId || null,
@@ -59,8 +75,8 @@ export const addToCart = async (req, res) => {
     }
 
     // 6. Check if product already in cart
-    let existingItem = cart.items.find((item) =>
-      item.productId.equals(productId)
+    existingItem = cart.items.find((item) =>
+      item.productId._id.equals(productId)
     );
 
     if (existingItem) {
@@ -97,17 +113,18 @@ export const addToCart = async (req, res) => {
 };
 
 // Get Cart
+// cartController.js - getCartData
 export const getCartData = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     const sessionId = req.sessionId;
 
     const cart = await getCart(userId, sessionId);
 
     if (!cart) {
-      return res.status(400).json({
-        success: false,
-        message: 'problem here',
+      // Return empty cart instead of error
+      return res.status(200).json({
+        success: true,
         cart: { items: [] },
       });
     }
@@ -117,6 +134,7 @@ export const getCartData = async (req, res) => {
       cart,
     });
   } catch (error) {
+    console.error('Get cart error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -128,8 +146,11 @@ export const getCartData = async (req, res) => {
 export const updateCartItem = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-    const userId = req.user?._id;
-    const sessionId = req.sessionID;
+    const userId = req.user?.id;
+    const sessionId = req.sessionId;
+
+    console.log(`[Cart] Update request for: ${productId}, Qty: ${quantity}`);
+    console.log(`User: ${userId ? userId : 'Guest'}, Session: ${sessionId}`);
 
     // 1. Validate input
     if (!productId || quantity === undefined) {
@@ -150,7 +171,7 @@ export const updateCartItem = async (req, res) => {
 
     // 3. Check stock availability
     if (product.quantity < quantity) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: `Only ${product.quantity} items available in stock`,
       });
@@ -167,7 +188,7 @@ export const updateCartItem = async (req, res) => {
 
     // 5. Find item to update
     const cartItem = cart.items.find(
-      (item) => item.productId.toString() === productId
+      (item) => item.productId._id.toString() === productId
     );
 
     if (!cartItem) {
@@ -179,8 +200,9 @@ export const updateCartItem = async (req, res) => {
 
     // 6. Update or remove item
     if (quantity <= 0) {
+      // Filter out the item to remove
       cart.items = cart.items.filter(
-        (item) => item.productId.toString() !== productId
+        (item) => item.productId._id.toString() !== productId
       );
     } else {
       cartItem.quantity = quantity;
@@ -200,50 +222,82 @@ export const updateCartItem = async (req, res) => {
       cart: updatedCart,
     });
   } catch (error) {
+    console.error('Update cart error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: error.message || 'Internal server error',
     });
   }
 };
 
+// Enhanced mergeCarts function with stock validation
 export const mergeCarts = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
     const sessionId = req.sessionId;
 
-    // 1. Find guest cart
-    const guestCart = await Cart.findOne({ sessionId });
+    // 1. Find guest cart with sessionId
+    const guestCart = await Cart.findOne({ sessionId }).populate(
+      'items.productId'
+    );
 
-    // 2. Find user cart
-    let userCart = await Cart.findOne({ user: userId });
+    // 2. Find or create user cart
+    let userCart = await Cart.findOne({ user: userId }).populate(
+      'items.productId'
+    );
+
+    if (!userCart) {
+      userCart = new Cart({ user: userId, items: [] });
+    }
 
     if (guestCart && guestCart.items.length > 0) {
-      if (!userCart) {
-        // Create new user cart if doesn't exist
-        userCart = new Cart({ user: userId, items: [] });
-      }
+      // 3. Merge items with stock validation
+      for (const guestItem of guestCart.items) {
+        const product = guestItem.productId;
+        if (!product) continue; // Skip if product not found
 
-      // 3. Merge items
-      guestCart.items.forEach((guestItem) => {
+        // Find existing item in user cart
         const existingItem = userCart.items.find(
-          (item) => item.productId.toString() === guestItem.productId.toString()
+          (item) => item.productId._id.toString() === product._id.toString()
         );
 
         if (existingItem) {
-          existingItem.quantity += guestItem.quantity;
+          // Calculate new quantity without exceeding stock
+          const newQty = existingItem.quantity + guestItem.quantity;
+          existingItem.quantity = Math.min(newQty, product.quantity);
         } else {
-          userCart.items.push(guestItem);
+          // Add new item if in stock
+          if (product.quantity > 0) {
+            userCart.items.push({
+              productId: product._id,
+              quantity: Math.min(guestItem.quantity, product.quantity),
+            });
+          }
         }
-      });
+      }
 
       // 4. Save and cleanup
       await userCart.save();
       await Cart.deleteOne({ _id: guestCart._id });
     }
 
-    res.status(200).json({ success: true, cart: userCart });
+    // 5. Return updated cart
+    const updatedCart = await Cart.populate(userCart, {
+      path: 'items.productId',
+      model: 'product',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Carts merged successfully',
+      cart: updatedCart,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error('Merge carts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
   }
 };

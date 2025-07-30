@@ -9,18 +9,12 @@ import { authenticateUser } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/mergeCarts', mergeCarts);
-
-// Apply to all routes
+// Apply authenticateUser to all routes
 router.use(authenticateUser);
 
-// POST /api/cart - Add to cart
-router.post('/addToCart', addToCart);
-
-// GET /api/cart - Get cart data
-router.get('/getCartData', getCartData);
-
-// PUT /api/cart - Update cart item
 router.put('/updateCartItem', updateCartItem);
+router.post('/addToCart', addToCart);
+router.post('/mergeCarts', mergeCarts);
+router.get('/getCartData', getCartData);
 
 export default router;

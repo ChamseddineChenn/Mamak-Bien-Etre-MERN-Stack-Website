@@ -12,28 +12,47 @@ const createToken = (id) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await userModel.findOne({ email });
+
+    const sanitizedEmail = validator.normalizeEmail(validator.trim(email));
+
+    if (!validator.isEmail(sanitizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email!',
+      });
+    }
+
+    const user = await userModel.findOne({ email: sanitizedEmail });
+
     if (!user) {
-      res.json({
+      return res.status(401).json({
         success: false,
         message: 'Invalid credentials, please verify your email/password!',
       });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (isMatch) {
-      const token = createToken(user._id);
-      res.json({
-        success: true,
-        message: 'Login successful, welcome back!',
-        token,
-      });
-    } else {
-      res.json({
+    if (!isMatch) {
+      return res.status(401).json({
+        // Added return and status code
         success: false,
         message: 'Invalid credentials, please verify your email/password!',
       });
     }
+
+    const token = createToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Login successful, welcome back!',
+      token,
+    });
   } catch (error) {
     console.log(error);
     return res.json({ success: false, message: error.message });
@@ -81,13 +100,19 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new userModel({
-      fullName: sanitizedEmail,
-      email: sanitizedFullName,
+      fullName: sanitizedFullName,
+      email: sanitizedEmail,
       password: hashedPassword,
     });
 
     const user = await newUser.save();
     const token = createToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
     res.json({ success: true, token });
   } catch (error) {
     console.log(error);
@@ -115,4 +140,31 @@ const adminLogin = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, adminLogin };
+const logoutUser = (req, res) => {
+  try {
+    req.user = null;
+    req.userId = null;
+    // Clear token cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    // Also clear the token in the response for header-based auth
+    res.setHeader('Clear-Token', 'true');
+
+    res.json({
+      success: true,
+      message: 'Logout successful',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed',
+    });
+  }
+};
+
+export { loginUser, registerUser, adminLogin, logoutUser };

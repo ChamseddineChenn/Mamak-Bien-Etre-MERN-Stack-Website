@@ -1,15 +1,13 @@
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import CartTotal from '../components/CartTotal';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import { ShopContext } from '../context/ShopContext';
-import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, useAnimation } from 'framer-motion';
+import { toast } from 'react-toastify';
 
-{
-  /* Cart icon animation: vibrate a little bit when it comes into view */
-}
 const EmptyCart = () => {
   const controls = useAnimation();
 
@@ -53,28 +51,128 @@ const EmptyCart = () => {
   );
 };
 
-{
-  /* Start of Cart page code */
-}
-
 const Cart = () => {
   const {
     products,
     currency,
     cartItems,
-    modifyCartItemsQuantity,
+    updateCartItemQuantity,
     navigate,
     isCartLoading,
   } = useContext(ShopContext);
-  const [cartData, setCartData] = useState([]);
 
+  const [cartData, setCartData] = useState([]);
+  const [localQuantities, setLocalQuantities] = useState({});
+  const [pendingUpdates, setPendingUpdates] = useState({});
+  const inputRefs = useRef({});
+
+  // Initialize cart data and local quantities
   useEffect(() => {
     const tempData = Object.entries(cartItems).map(([itemId, quantity]) => ({
       _id: itemId,
       quantity,
     }));
+
     setCartData(tempData);
+
+    // Initialize local quantities
+    const newLocalQuantities = {};
+    tempData.forEach((item) => {
+      newLocalQuantities[item._id] = item.quantity;
+    });
+    setLocalQuantities(newLocalQuantities);
   }, [cartItems]);
+
+  // Optimistic quantity update
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    const previousQuantity = localQuantities[itemId];
+
+    // Optimistic UI update
+    setLocalQuantities((prev) => ({ ...prev, [itemId]: newQuantity }));
+    setPendingUpdates((prev) => ({ ...prev, [itemId]: true }));
+
+    try {
+      // We don't need to handle the response here
+      await updateCartItemQuantity(itemId, newQuantity);
+    } catch (error) {
+      console.log(error);
+      // Revert only for network errors
+      setLocalQuantities((prev) => ({ ...prev, [itemId]: previousQuantity }));
+    } finally {
+      setPendingUpdates((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
+  // Handle direct input changes
+  const handleInputChange = (itemId, value) => {
+    const product = products.find((p) => p._id === itemId);
+    if (!product) return;
+
+    const numValue = Number(value);
+    if (isNaN(numValue)) return;
+
+    // Clamp value to stock limit
+    const clampedValue = Math.min(Math.max(1, numValue), product.quantity);
+    setLocalQuantities((prev) => ({ ...prev, [itemId]: clampedValue }));
+  };
+
+  // Handle increment/decrement buttons
+  const handleQuantityAdjust = (itemId, delta) => {
+    const product = products.find((p) => p._id === itemId);
+    if (!product) return;
+
+    const currentQty = localQuantities[itemId] || 1;
+    const newQty = currentQty + delta;
+
+    // Validate against stock before sending
+    if (newQty > product.quantity) {
+      toast.warning(`${product.quantity} items available in stock`);
+      return;
+    }
+
+    handleQuantityChange(itemId, newQty);
+  };
+
+  // Handle remove item
+  const handleRemoveItem = async (itemId) => {
+    // Optimistically remove from UI immediately
+    setLocalQuantities((prev) => {
+      const newQuantities = { ...prev };
+      delete newQuantities[itemId];
+      return newQuantities;
+    });
+
+    // Track this update as pending
+    setPendingUpdates((prev) => ({
+      ...prev,
+      [itemId]: true,
+    }));
+
+    try {
+      await updateCartItemQuantity(itemId, 0);
+    } catch (error) {
+      console.error('Remove error:', error);
+      // Revert on error
+      setLocalQuantities((prev) => ({
+        ...prev,
+        [itemId]: cartItems[itemId] || 1,
+      }));
+    } finally {
+      setPendingUpdates((prev) => ({
+        ...prev,
+        [itemId]: false,
+      }));
+    }
+  };
+
+  // Handle Enter key in input field
+  const handleKeyPress = (e, itemId) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.target.blur();
+      handleQuantityChange(itemId, localQuantities[itemId]);
+    }
+  };
 
   return (
     <div className="border-t pt-14 min-h-[100vh]">
@@ -97,6 +195,10 @@ const Cart = () => {
 
               // Add null check for productData
               if (!productData) return null;
+
+              const currentQuantity =
+                localQuantities[item._id] || item.quantity;
+              const isPending = pendingUpdates[item._id];
 
               return (
                 <div className="flex flex-col mx-20" key={index}>
@@ -122,55 +224,68 @@ const Cart = () => {
 
                     {/* Quantity controls */}
                     <div className="flex items-center">
-                      <button>
+                      <button
+                        onClick={() => handleQuantityAdjust(item._id, -1)}
+                        disabled={isPending}
+                        className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
+                          isPending ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
                         <img
-                          className="min-w-5 w-5 min-h-5 h-5 cursor-pointer -rotate-90"
+                          className="min-w-5 w-5 min-h-5 h-5 -rotate-90"
                           src={assets.arrow_up_icon}
-                          onClick={() => {
-                            if (item.quantity > 1) {
-                              modifyCartItemsQuantity(
-                                item._id,
-                                item.quantity - 1
-                              );
-                            }
-                          }}
                           alt="Decrease quantity"
                         />
                       </button>
+
                       <input
-                        className="border-transparent bg-[#A6A58A]/30 max-w-10 sm:max-w-20 sm:px-2 p-1 text-center rounded-2xl"
+                        ref={(el) => (inputRefs.current[item._id] = el)}
+                        className={`border-transparent bg-[#A6A58A]/30 max-w-10 sm:max-w-20 sm:px-2 p-1 text-center rounded-2xl ${
+                          isPending ? 'opacity-50' : ''
+                        }`}
                         type="number"
                         min={1}
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (!isNaN(value) && value >= 1) {
-                            modifyCartItemsQuantity(item._id, value);
-                          }
-                        }}
+                        max={productData.quantity}
+                        value={currentQuantity}
+                        onChange={(e) =>
+                          handleInputChange(item._id, e.target.value)
+                        }
+                        onBlur={() =>
+                          handleQuantityChange(item._id, currentQuantity)
+                        }
+                        onKeyPress={(e) => handleKeyPress(e, item._id)}
+                        disabled={isPending}
                       />
-                      <button>
+
+                      <button
+                        onClick={() => handleQuantityAdjust(item._id, 1)}
+                        disabled={isPending}
+                        className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
+                          isPending ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
                         <img
-                          className="min-w-5 w-5 min-h-5 h-5 cursor-pointer rotate-90"
+                          className="min-w-5 w-5 min-h-5 h-5 rotate-90"
                           src={assets.arrow_up_icon}
-                          onClick={() => {
-                            modifyCartItemsQuantity(
-                              item._id,
-                              item.quantity + 1
-                            );
-                          }}
                           alt="Increase quantity"
                         />
                       </button>
                     </div>
 
                     {/* Delete button */}
-                    <img
-                      className="w-4 mr-[16vw] sm:w-5 cursor-pointer"
-                      src={assets.bin_icon}
-                      onClick={() => modifyCartItemsQuantity(item._id, 0)}
-                      alt="Remove item"
-                    />
+                    <button
+                      onClick={() => handleRemoveItem(item._id)}
+                      disabled={isPending}
+                      className={`flex items-center justify-center w-4 mr-[16vw] sm:w-5 ${
+                        isPending ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <img
+                        className="w-4 sm:w-5"
+                        src={assets.bin_icon}
+                        alt="Remove item"
+                      />
+                    </button>
                   </div>
                   <span className="w-[75vw] border-b border-[#A6A58A] rounded-2xl"></span>
                 </div>

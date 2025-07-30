@@ -4,6 +4,8 @@ import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext.jsx';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
@@ -17,13 +19,37 @@ const Navbar = () => {
     getCartTotal,
     products,
     currency,
+    backendURL,
   } = useContext(ShopContext);
 
-  const logout = () => {
-    navigate('/login');
-    localStorage.removeItem('token');
-    setToken('');
-    setCartItems({});
+  const logout = async () => {
+    try {
+      // Call the logout API
+      await axios.post(
+        `${backendURL}/api/user/logout`,
+        {},
+        {
+          withCredentials: true,
+          headers: { token: token || localStorage.getItem('token') },
+        }
+      );
+
+      // Clear frontend state
+      localStorage.removeItem('token');
+      setToken('');
+      setCartItems({});
+
+      // Redirect to login
+      navigate('/login');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Fallback: Clear frontend state anyway
+      localStorage.removeItem('token');
+      setToken('');
+      setCartItems({});
+      navigate('/login');
+    }
   };
 
   const FlyoutLink = ({
