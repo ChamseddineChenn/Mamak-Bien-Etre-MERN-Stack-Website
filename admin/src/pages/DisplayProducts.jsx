@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { backendURL } from '../constants/Exports';
 import { toast } from 'react-toastify';
-import ProductCategorySection from '../componnents/ProductCategorySection';
+import ProductCategorySection from '../components/ProductCategorySection';
 
 const DisplayProducts = ({ token }) => {
   const [groupedProducts, setGroupedProducts] = useState({});

@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from './componnents/Navbar';
+import Navbar from './components/Navbar';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AddProduct from './pages/AddProduct';
 import DisplayProducts from './pages/DisplayProducts';
 import Orders from './pages/Orders';
-import Login from './componnents/Login';
+import Login from './components/Login';
 import Dashboard from './pages/Dashboard';
-import ProductPreview from './componnents/ProductPreview';
-import ProductEdit from './componnents/ProductEdit';
+import ProductPreview from './components/ProductPreview';
+import ProductEdit from './components/ProductEdit';
+import PendingOrders from './pages/PendingOrders';
+import CompletedOrders from './pages/CompletedOrders';
+import CancelledOrders from './pages/CancelledOrders';
 
 const App = () => {
   const [token, setToken] = useState(
@@ -66,6 +69,18 @@ const App = () => {
                 <Route
                   path="/admin/product-edit/:productId"
                   element={<ProductEdit token={token} />}
+                />
+                <Route
+                  path="/admin/orders/pending"
+                  element={<PendingOrders token={token} />}
+                />
+                <Route
+                  path="/admin/orders/completed"
+                  element={<CompletedOrders token={token} />}
+                />
+                <Route
+                  path="/admin/orders/cancelled"
+                  element={<CancelledOrders token={token} />}
                 />
               </Routes>
             </div>

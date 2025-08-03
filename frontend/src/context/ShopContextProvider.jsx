@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { ShopContext } from './ShopContext';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -16,8 +22,10 @@ const ShopContextProvider = (props) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState('');
   const [isCartLoading, setIsCartLoading] = useState(true);
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const isSessionInitialized = useRef(false);
 
-  // ALL DATA RELATED TO PRODUCTS
+  // ALL DATA RELATED TO PRODUCTS ------------------------------------------------------------ Products --------------------------------
   // Data fetching
   const getProductsData = useCallback(async () => {
     try {
@@ -31,11 +39,9 @@ const ShopContextProvider = (props) => {
     } catch (error) {
       toast.error(error.message);
     }
-  }, [backendURL]); //  Add backendURL dependency
+  }, [backendURL]);
 
-  //  Only depends on getProductsData (which is memoized)
-
-  // ALL DATA RELATED TO CART
+  // // ALL DATA RELATED TO CART ------------------------------------------------------------ Cart --------------------------------
   // Fetch cart data
   const fetchCart = useCallback(async () => {
     try {
@@ -43,7 +49,7 @@ const ShopContextProvider = (props) => {
       const response = await axiosInstance.get(
         `${backendURL}/api/cart/getCartData`,
         {
-          withCredentials: true, // Sends cookies automatically
+          withCredentials: true,
         }
       );
 
@@ -60,6 +66,8 @@ const ShopContextProvider = (props) => {
       console.error('Cart fetch error:', error);
     } finally {
       setIsCartLoading(false);
+      // Mark session as ready after cart fetch attempt
+      setIsSessionReady(true);
     }
   }, [backendURL]);
 
@@ -73,12 +81,9 @@ const ShopContextProvider = (props) => {
           { withCredentials: true }
         );
 
-        // Handle stock limitation response
-
         if (response.data.success === false) {
           toast.warning(response.data.message);
 
-          // Add maximum allowed quantity if specified
           if (response.data.maxAllowed >= 0) {
             await axiosInstance.post(
               `${backendURL}/api/cart/addToCart`,
@@ -87,7 +92,6 @@ const ShopContextProvider = (props) => {
             );
           }
 
-          // Refetch cart to update UI
           fetchCart();
           return;
         }
@@ -117,7 +121,6 @@ const ShopContextProvider = (props) => {
           { withCredentials: true }
         );
 
-        // Always handle the response message
         if (response.data.message) {
           if (response.data.success) {
             toast.success(response.data.message);
@@ -140,7 +143,6 @@ const ShopContextProvider = (props) => {
 
         return response.data;
       } catch (error) {
-        // Handle network/server errors
         const errorMessage =
           error.response?.data?.message ||
           error.message ||
@@ -163,7 +165,6 @@ const ShopContextProvider = (props) => {
       );
 
       if (response.data.success) {
-        // Update local cart state
         const itemsMap = {};
         response.data.cart.items.forEach((item) => {
           if (item.productId && item.productId._id) {
@@ -195,15 +196,72 @@ const ShopContextProvider = (props) => {
     }, 0);
   }, [cartItems, products]);
 
-  // Use Effect functions are ALL here
+  // ALL DATA RELATED TO ORDERS ------------------------------------------------------------ Orders --------------------------------
 
-  // Fetch products
+  // Create order
+  const createOrder = useCallback(
+    async (address) => {
+      try {
+        const response = await axiosInstance.post(
+          `${backendURL}/api/order/create-order`,
+          { address },
+          { withCredentials: true }
+        );
 
+        if (response.data.success) {
+          setCartItems({});
+          return response.data.order;
+        }
+        throw new Error(response.data.message || 'Failed to create order');
+      } catch (error) {
+        throw new Error(error.response?.data?.message || error.message);
+      }
+    },
+    [backendURL]
+  );
+
+  // Get order by ID
+  const getOrderById = useCallback(
+    async (orderId) => {
+      try {
+        const response = await axiosInstance.get(
+          `${backendURL}/api/order/${orderId}`,
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          return response.data.order;
+        }
+        throw new Error('Order not found');
+      } catch (error) {
+        throw new Error(error.response?.data?.message || error.message);
+      }
+    },
+    [backendURL]
+  );
+
+  // Get user orders
+  const getUserOrders = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${backendURL}/api/order/user-orders`,
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        return response.data.orders;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to get orders:', error);
+      return [];
+    }
+  }, [backendURL]);
+
+  // Use Effect functions
   useEffect(() => {
     getProductsData();
   }, [getProductsData]);
-
-  // Better handling of token
 
   useEffect(() => {
     const requestInterceptor = axiosInstance.interceptors.request.use(
@@ -219,7 +277,6 @@ const ShopContextProvider = (props) => {
 
     const responseInterceptor = axiosInstance.interceptors.response.use(
       (response) => {
-        // Check if we need to clear token
         if (response.headers['clear-token'] === 'true') {
           localStorage.removeItem('token');
           setToken('');
@@ -227,7 +284,6 @@ const ShopContextProvider = (props) => {
         return response;
       },
       (error) => {
-        // Handle 401 Unauthorized
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           setToken('');
@@ -242,9 +298,12 @@ const ShopContextProvider = (props) => {
     };
   }, [token]);
 
-  // Refresh cart when token changes (login/logout)
+  // Initialize session on first load
   useEffect(() => {
-    fetchCart();
+    if (!isSessionInitialized.current) {
+      isSessionInitialized.current = true;
+      fetchCart();
+    }
   }, [fetchCart]);
 
   // Memoize context value
@@ -267,6 +326,10 @@ const ShopContextProvider = (props) => {
       token,
       setToken,
       isCartLoading,
+      createOrder,
+      getOrderById,
+      getUserOrders,
+      isSessionReady, // Add to context
     }),
     [
       products,
@@ -282,6 +345,10 @@ const ShopContextProvider = (props) => {
       token,
       setToken,
       isCartLoading,
+      createOrder,
+      getOrderById,
+      getUserOrders,
+      isSessionReady, // Add dependency
     ]
   );
 

@@ -32,6 +32,10 @@ import phone_icon from './phone.png';
 import email_icon from './email.png';
 import customer_service_icon from './Customer Service.png';
 import contact_img from './Contact.jpg';
+import no_order_icon from './no_order.svg';
+import green_check_icon from './green_check.svg';
+import order_sum_icon from './order_sum.svg';
+import shipping_icon from './shipping_icon.svg';
 
 export const assets = {
   logo,
@@ -68,6 +72,10 @@ export const assets = {
   address_icon,
   phone_icon,
   email_icon,
+  no_order_icon,
+  green_check_icon,
+  order_sum_icon,
+  shipping_icon,
 };
 
 export const products = [

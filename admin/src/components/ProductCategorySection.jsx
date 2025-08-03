@@ -1,5 +1,5 @@
 import React from 'react';
-import ProductCard from '../componnents/ProductCard';
+import ProductCard from './ProductCard';
 
 const ProductCategorySection = ({ category, subcategories, onDelete }) => {
   return (
