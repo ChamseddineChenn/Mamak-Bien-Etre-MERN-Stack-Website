@@ -20,13 +20,14 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || '';
+  });
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [isSessionReady, setIsSessionReady] = useState(false);
   const isSessionInitialized = useRef(false);
+  const [user, setUser] = useState(null);
 
-  // ALL DATA RELATED TO PRODUCTS ------------------------------------------------------------ Products --------------------------------
-  // Data fetching
   const getProductsData = useCallback(async () => {
     try {
       const URL = `${backendURL}/api/product/displayProducts`;
@@ -41,16 +42,118 @@ const ShopContextProvider = (props) => {
     }
   }, [backendURL]);
 
-  // // ALL DATA RELATED TO CART ------------------------------------------------------------ Cart --------------------------------
-  // Fetch cart data
+  const fetchUserProfile = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const response = await axiosInstance.get(
+        `${backendURL}/api/user/profile`,
+        {
+          withCredentials: true,
+          headers: {
+            token: token,
+          },
+        }
+      );
+
+      if (response.data.success && response.data.user) {
+        console.log('USER: ----------> ' + response.data.user._id);
+        setUser(response.data.user);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  }, [backendURL, token]);
+
+  const updateUserDeliveryAddress = useCallback(
+    async (address) => {
+      if (!token) return;
+
+      try {
+        setUser((prev) => ({
+          ...prev,
+          deliveryAddress: address,
+        }));
+
+        await axiosInstance.post(
+          `${backendURL}/api/user/delivery-address`,
+          address,
+          { withCredentials: true }
+        );
+        return true;
+      } catch (error) {
+        throw error.response?.data?.message || 'Failed to save address';
+      }
+    },
+    [backendURL, token]
+  );
+
+  const changePassword = useCallback(
+    async (currentPassword, newPassword) => {
+      try {
+        const response = await axiosInstance.put(
+          `${backendURL}/api/user/change-password`,
+          { currentPassword, newPassword },
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          if (response.data.requireReauth) {
+            localStorage.removeItem('token');
+            setToken('');
+            toast.info('Password changed. Please login again.');
+            navigate('/login');
+          }
+          return true;
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (error) {
+        throw new Error(
+          error.response?.data?.message ||
+            error.message ||
+            'Password change failed'
+        );
+      }
+    },
+    [backendURL, token, navigate]
+  );
+
+  const updateUserProfile = useCallback(
+    async (fullName) => {
+      try {
+        const response = await axiosInstance.put(
+          `${backendURL}/api/user/profile`,
+          { fullName },
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          setUser((prev) => ({
+            ...prev,
+            fullName: response.data.user.fullName,
+          }));
+          return true;
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (error) {
+        throw new Error(
+          error.response?.data?.message ||
+            error.message ||
+            'Profile update failed'
+        );
+      }
+    },
+    [backendURL, token]
+  );
+
   const fetchCart = useCallback(async () => {
     try {
       setIsCartLoading(true);
       const response = await axiosInstance.get(
         `${backendURL}/api/cart/getCartData`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (response.data.success) {
@@ -66,12 +169,10 @@ const ShopContextProvider = (props) => {
       console.error('Cart fetch error:', error);
     } finally {
       setIsCartLoading(false);
-      // Mark session as ready after cart fetch attempt
       setIsSessionReady(true);
     }
   }, [backendURL]);
 
-  // Add item to cart
   const addToCart = useCallback(
     async (itemId, quantity = 1) => {
       try {
@@ -111,7 +212,6 @@ const ShopContextProvider = (props) => {
     [backendURL, fetchCart]
   );
 
-  // Update cart items
   const updateCartItemQuantity = useCallback(
     async (itemId, newQuantity) => {
       try {
@@ -155,7 +255,6 @@ const ShopContextProvider = (props) => {
     [backendURL, fetchCart]
   );
 
-  // Merge cart using session id with loggedin user
   const mergeCarts = useCallback(async () => {
     try {
       const response = await axiosInstance.post(
@@ -196,15 +295,15 @@ const ShopContextProvider = (props) => {
     }, 0);
   }, [cartItems, products]);
 
-  // ALL DATA RELATED TO ORDERS ------------------------------------------------------------ Orders --------------------------------
-
-  // Create order
   const createOrder = useCallback(
-    async (address) => {
+    async (orderData) => {
       try {
         const response = await axiosInstance.post(
           `${backendURL}/api/order/create-order`,
-          { address },
+          {
+            address: orderData.address,
+            paymentMethod: orderData.paymentMethod,
+          },
           { withCredentials: true }
         );
 
@@ -220,7 +319,6 @@ const ShopContextProvider = (props) => {
     [backendURL]
   );
 
-  // Get order by ID
   const getOrderById = useCallback(
     async (orderId) => {
       try {
@@ -230,7 +328,7 @@ const ShopContextProvider = (props) => {
         );
 
         if (response.data.success) {
-          return response.data.order;
+          return response.data.order; // Ensure this is the populated order
         }
         throw new Error('Order not found');
       } catch (error) {
@@ -240,7 +338,6 @@ const ShopContextProvider = (props) => {
     [backendURL]
   );
 
-  // Get user orders
   const getUserOrders = useCallback(async () => {
     try {
       const response = await axiosInstance.get(
@@ -258,10 +355,17 @@ const ShopContextProvider = (props) => {
     }
   }, [backendURL]);
 
-  // Use Effect functions
   useEffect(() => {
     getProductsData();
   }, [getProductsData]);
+
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setUser(null);
+    }
+  }, [token, fetchUserProfile]);
 
   useEffect(() => {
     const requestInterceptor = axiosInstance.interceptors.request.use(
@@ -298,7 +402,6 @@ const ShopContextProvider = (props) => {
     };
   }, [token]);
 
-  // Initialize session on first load
   useEffect(() => {
     if (!isSessionInitialized.current) {
       isSessionInitialized.current = true;
@@ -306,7 +409,6 @@ const ShopContextProvider = (props) => {
     }
   }, [fetchCart]);
 
-  // Memoize context value
   const value = useMemo(
     () => ({
       products,
@@ -329,7 +431,12 @@ const ShopContextProvider = (props) => {
       createOrder,
       getOrderById,
       getUserOrders,
-      isSessionReady, // Add to context
+      isSessionReady,
+      user,
+      userDeliveryAddress: user?.deliveryAddress || null,
+      updateUserDeliveryAddress,
+      changePassword,
+      updateUserProfile,
     }),
     [
       products,
@@ -348,7 +455,11 @@ const ShopContextProvider = (props) => {
       createOrder,
       getOrderById,
       getUserOrders,
-      isSessionReady, // Add dependency
+      isSessionReady,
+      user,
+      updateUserDeliveryAddress,
+      changePassword,
+      updateUserProfile,
     ]
   );
 

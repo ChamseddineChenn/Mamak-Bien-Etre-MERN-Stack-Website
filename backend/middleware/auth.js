@@ -1,28 +1,37 @@
 import jwt from 'jsonwebtoken';
+import userModel from '../models/userModel.js';
 
-export const authenticateUser = (req, res, next) => {
+export const authenticateUser = async (req, res, next) => {
   req.sessionId = req.sessionID;
 
-  // Check for token in headers or cookies
   let token;
-
-  // 1. Check headers
   if (req.headers.token) {
     token = req.headers.token;
-  }
-  // 2. Check cookies
-  else if (req.cookies?.token) {
+  } else if (req.cookies?.token) {
     token = req.cookies.token;
   }
 
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = decoded;
+
+      const user = await userModel.findById(decoded.id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const tokenVersion = decoded.v ?? 0;
+      if (user.tokenVersion !== tokenVersion) {
+        throw new Error('Token version mismatch');
+      }
+
+      req.user = {
+        id: user._id,
+        ...decoded,
+      };
       req.userId = decoded.id;
     } catch (error) {
       console.warn('Invalid token:', error.message);
-      // Clear invalid token from client
       res.setHeader('Clear-Token', 'true');
     }
   }

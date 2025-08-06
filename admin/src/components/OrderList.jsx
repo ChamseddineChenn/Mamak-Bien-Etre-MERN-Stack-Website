@@ -17,8 +17,8 @@ const OrderList = ({ token, statuses }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
-  // Wrap fetchOrders in useCallback to prevent unnecessary recreations
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -69,11 +69,18 @@ const OrderList = ({ token, statuses }) => {
     setSearchTerm('');
   };
 
-  // Fetch orders when component mounts, statuses change, or searchTerm changes
+  const toggleExpand = (orderId) => {
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+    } else {
+      setExpandedOrder(orderId);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchOrders();
-    }, 300); // Shorter debounce time
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [fetchOrders, statuses, searchTerm]);
@@ -87,7 +94,9 @@ const OrderList = ({ token, statuses }) => {
       />
 
       {loading ? (
-        <div className="text-center py-8">Loading orders...</div>
+        <div className="flex justify-center items-center min-h-[100vh]">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-[#A6A58A]"></div>
+        </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500 mb-4">
@@ -116,55 +125,101 @@ const OrderList = ({ token, statuses }) => {
                 <th className="py-3 px-4 text-left">Items</th>
                 <th className="py-3 px-4 text-left">Total</th>
                 <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {orders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div
-                      className="font-medium text-gray-900"
-                      title={order._id}
-                    >
-                      {order.shortId}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="text-gray-900">
-                      {order.address.fullName}
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {order.address.city}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{order.address.phone}</td>
-                  <td className="py-3 px-4">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4">{order.items.length} items</td>
-                  <td className="py-3 px-4">${order.totalAmount.toFixed(2)}</td>
-                  <td className="py-3 px-4">
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        handleStatusChange(order._id, e.target.value)
-                      }
-                      className={`px-2 py-1 rounded border ${
-                        order.status === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : order.status === 'delivered'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replace(/_/g, ' ')}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
+                <React.Fragment key={order._id}>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div
+                        className="font-medium text-gray-900"
+                        title={order._id}
+                      >
+                        {order.shortId}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="py-3 px-4">
+                        {order.address.recipientName}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">{order.address.phoneNumber}</td>
+                    <td className="py-3 px-4">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4">{order.items.length} items</td>
+                    <td className="py-3 px-4">
+                      TND {order.totalAmount.toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <select
+                        value={order.status}
+                        onChange={(e) =>
+                          handleStatusChange(order._id, e.target.value)
+                        }
+                        className={`px-2 py-1 rounded border ${
+                          order.status === 'cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : order.status === 'delivered'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {STATUS_OPTIONS.map((status) => (
+                          <option key={status} value={status}>
+                            {status.replace(/_/g, ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => toggleExpand(order._id)}
+                        className="text-[#A6A58A] hover:text-[#8a896d]"
+                      >
+                        {expandedOrder === order._id ? '▲' : '▼'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {expandedOrder === order._id && (
+                    <tr>
+                      <td colSpan="8" className="bg-gray-50 p-4">
+                        <div className="border-t border-gray-200 pt-4">
+                          <h3 className="font-semibold mb-3">Order Items:</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {order.items.map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center border-b pb-3 last:border-0"
+                              >
+                                <div className="flex-1">
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-medium">
+                                    TND {item.priceAtOrder.toFixed(2)} each
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Total: TND{' '}
+                                    {(
+                                      item.quantity * item.priceAtOrder
+                                    ).toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

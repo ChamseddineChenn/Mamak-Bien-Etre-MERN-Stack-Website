@@ -1,4 +1,3 @@
-import React from 'react';
 import { currency } from '../constants/Exports';
 import { useNavigate } from 'react-router-dom';
 

@@ -3,39 +3,40 @@ import Order from '../models/orderModel.js';
 import Cart from '../models/cartModel.js';
 import Product from '../models/productModel.js';
 
-// Helper to get user cart
-const getUserCart = async (userId, sessionId) => {
-  if (userId) {
-    return await Cart.findOne({ user: userId }).populate('items.productId');
-  } else if (sessionId) {
-    return await Cart.findOne({ sessionId }).populate('items.productId');
-  }
-  return null;
-};
-
 // Create Order
 export const createOrder = async (req, res) => {
   try {
     const userId = req.user?.id;
     const sessionId = req.sessionId;
-    const { address, paymentMethod = 'cod' } = req.body;
+    const { address, paymentMethod } = req.body;
 
     // Validate address
-    if (
-      !address ||
-      !address.street ||
-      !address.city ||
-      !address.postalCode ||
-      !address.phone
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Complete address information including phone is required',
-      });
+    const requiredFields = [
+      'recipientName',
+      'street',
+      'city',
+      'state',
+      'zipCode',
+      'country',
+      'phoneNumber',
+    ];
+
+    for (const field of requiredFields) {
+      if (!address[field]) {
+        return res.status(400).json({
+          success: false,
+          message: `Address ${field} is required`,
+        });
+      }
     }
 
-    // Get cart and validate
-    const cart = await getUserCart(userId, sessionId);
+    // Get cart
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId }).populate('items.productId');
+    } else {
+      cart = await Cart.findOne({ sessionId }).populate('items.productId');
+    }
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -43,14 +44,16 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Prepare order items and calculate total
+    // Calculate total and prepare items
     let totalAmount = 0;
-    const orderItems = [];
+    const items = [];
+    const productUpdates = [];
 
     for (const item of cart.items) {
       const product = item.productId;
+      const quantity = item.quantity;
 
-      // Verify product exists
+      // Check if product exists
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -58,61 +61,82 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      // Verify stock
-      if (product.quantity < item.quantity) {
+      // Check stock availability
+      if (product.quantity < quantity) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${product.name}`,
+          message: `Not enough stock for ${product.name}. Only ${product.quantity} available`,
           productId: product._id,
+          maxAllowed: product.quantity,
         });
       }
 
-      // Add to order items
-      orderItems.push({
+      const price = product.price;
+      totalAmount += price * quantity;
+
+      items.push({
         productId: product._id,
-        quantity: item.quantity,
-        priceAtOrder: product.price,
+        quantity,
+        priceAtOrder: price,
         name: product.name,
-        image: product.image[0],
       });
 
-      // Calculate total
-      totalAmount += product.price * item.quantity;
+      // Prepare product quantity update
+      productUpdates.push({
+        updateOne: {
+          filter: { _id: product._id },
+          update: { $inc: { quantity: -quantity } },
+        },
+      });
     }
 
     // Add delivery fee
-    const deliveryFee = 10; // Could be dynamic
+    const deliveryFee = 10; // TND
     totalAmount += deliveryFee;
 
-    // Create order - FIXED: Removed shortId generation here
+    // Create order
     const order = new Order({
       user: userId || null,
-      sessionId: userId ? null : sessionId,
+      sessionId: userId ? undefined : sessionId,
       address,
-      items: orderItems,
+      items,
       totalAmount,
       deliveryFee,
       paymentMethod,
     });
 
-    // Save order
-    await order.save();
+    // Start transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Update product quantities
-    for (const item of cart.items) {
-      await Product.findByIdAndUpdate(item.productId._id, {
-        $inc: { quantity: -item.quantity },
+    try {
+      // Update product quantities
+      if (productUpdates.length > 0) {
+        await Product.bulkWrite(productUpdates, { session });
+      }
+
+      // Save order
+      await order.save({ session });
+
+      // Clear cart
+      cart.items = [];
+      await cart.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+
+      res.json({
+        success: true,
+        message: 'Order created successfully',
+        order,
       });
+    } catch (error) {
+      // Abort transaction on error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    // Clear cart
-    await Cart.deleteOne({ _id: cart._id });
-
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      order,
-    });
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({
@@ -132,14 +156,34 @@ export const getUserOrders = async (req, res) => {
       const orders = await Order.find({ user: userId })
         .sort({ createdAt: -1 })
         .lean();
-      return res.status(200).json({ success: true, orders });
+
+      // Add image URLs to each item
+      const ordersWithImages = orders.map((order) => ({
+        ...order,
+        items: order.items.map((item) => ({
+          ...item,
+          image: item.image || 'default-product.jpg', // Add default image if missing
+        })),
+      }));
+
+      return res.status(200).json({ success: true, orders: ordersWithImages });
     }
 
     if (sessionId) {
       const orders = await Order.find({ sessionId })
         .sort({ createdAt: -1 })
         .lean();
-      return res.status(200).json({ success: true, orders });
+
+      // Add image URLs to each item
+      const ordersWithImages = orders.map((order) => ({
+        ...order,
+        items: order.items.map((item) => ({
+          ...item,
+          image: item.image || 'default-product.jpg', // Add default image if missing
+        })),
+      }));
+
+      return res.status(200).json({ success: true, orders: ordersWithImages });
     }
 
     res.status(400).json({ success: false, message: 'No orders found' });
@@ -157,7 +201,10 @@ export const getOrderById = async (req, res) => {
     const sessionId = req.sessionId;
 
     const order = await Order.findById(orderId)
-      .populate('items.productId', 'name image price')
+      .populate({
+        path: 'items.productId',
+        select: 'name image price description', // Include image here
+      })
       .lean();
 
     if (!order) {
@@ -177,7 +224,17 @@ export const getOrderById = async (req, res) => {
       });
     }
 
-    res.status(200).json({ success: true, order });
+    // Map product data to items
+    const populatedOrder = {
+      ...order,
+      items: order.items.map((item) => ({
+        ...item,
+        productData: item.productId, // Attach full product data
+        productId: item.productId._id, // Keep productId as ID
+      })),
+    };
+
+    res.status(200).json({ success: true, order: populatedOrder });
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -242,7 +299,7 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Order management (FIXED SEARCH)
+// Order management
 export const getOrdersForAdmin = async (req, res) => {
   try {
     const { status, search } = req.query;
@@ -260,8 +317,8 @@ export const getOrdersForAdmin = async (req, res) => {
       const isObjectId = mongoose.Types.ObjectId.isValid(trimmedSearch);
 
       conditions.$or = [
-        { 'address.fullName': { $regex: trimmedSearch, $options: 'i' } },
-        { 'address.phone': { $regex: trimmedSearch, $options: 'i' } },
+        { 'address.recipientName': { $regex: trimmedSearch, $options: 'i' } },
+        { 'address.phoneNumber': { $regex: trimmedSearch, $options: 'i' } },
         { shortId: { $regex: trimmedSearch, $options: 'i' } },
       ];
     }

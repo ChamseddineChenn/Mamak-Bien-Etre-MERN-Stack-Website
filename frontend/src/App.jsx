@@ -13,7 +13,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
 import OrderConfirmation from './pages/OrderConfirmation';
 
 const ScrollToTop = () => {
@@ -45,7 +45,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<UserProfile />} />
         <Route
           path="/order-confirmation/:orderId"
           element={<OrderConfirmation />}

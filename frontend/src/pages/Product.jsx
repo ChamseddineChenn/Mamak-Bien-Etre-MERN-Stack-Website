@@ -47,12 +47,14 @@ const Product = () => {
   const [productData, setProductData] = useState(false);
   const [productImage, setProductImage] = useState('');
   const [activeTab, setActiveTab] = useState('description');
+  const [localQuantity, setLocalQuantity] = useState(0);
 
   const fetchProductData = async () => {
     products.map((item) => {
       if (item._id === productId) {
         setProductData(item);
         setProductImage(item.image[0]);
+        setLocalQuantity(item.quantity);
         return null;
       }
     });
@@ -62,6 +64,15 @@ const Product = () => {
     fetchProductData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, products]);
+
+  const handleAddToCart = () => {
+    if (localQuantity > 0) {
+      addToCart(productData._id);
+      setLocalQuantity((prev) => Math.max(0, prev - 1)); // Decrement local quantity
+    } else {
+      alert('This product is out of stock');
+    }
+  };
 
   return productData ? (
     <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A] ">
@@ -129,12 +140,34 @@ const Product = () => {
               {productData.description}
             </p>
 
+            {/* Stock Indicator */}
+            <div className="mb-4">
+              <span
+                className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${
+                  localQuantity > 10
+                    ? 'bg-green-100 text-green-800'
+                    : localQuantity > 0
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {localQuantity > 0
+                  ? `${localQuantity} in stock`
+                  : 'Out of stock'}
+              </span>
+            </div>
+
             {/* Add to Cart */}
             <button
-              className="w-full sm:w-auto bg-[#D6A7A0] hover:bg-[#C79790] text-white px-8 py-4 rounded-full font-medium mb-10 transition-colors shadow-sm hover:shadow-md"
-              onClick={() => addToCart(productData._id)}
+              className={`w-full sm:w-auto px-8 py-4 rounded-full font-medium mb-10 transition-colors shadow-sm hover:shadow-md ${
+                localQuantity > 0
+                  ? 'bg-[#D6A7A0] hover:bg-[#C79790] text-white'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={handleAddToCart}
+              disabled={localQuantity === 0}
             >
-              Add to Cart
+              {localQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
             </button>
 
             {/* Divider */}

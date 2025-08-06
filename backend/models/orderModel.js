@@ -10,13 +10,13 @@ const orderSchema = new mongoose.Schema(
     sessionId: String,
     address: {
       type: {
-        fullName: String,
+        recipientName: String,
         street: String,
         city: String,
         state: String,
-        postalCode: String,
+        zipCode: String,
         country: String,
-        phone: String,
+        phoneNumber: String,
       },
       required: true,
     },
@@ -37,7 +37,6 @@ const orderSchema = new mongoose.Schema(
           required: true,
         },
         name: String,
-        image: String,
       },
     ],
     status: {

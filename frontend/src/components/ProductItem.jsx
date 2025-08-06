@@ -2,22 +2,66 @@ import { ShopContext } from '../context/ShopContext';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 
-const ProductItem = ({ id, image, name, price }) => {
+const ProductItem = ({
+  id,
+  image,
+  name,
+  price,
+  bestSeller,
+  newArrival,
+  onSale,
+  onSalePercent,
+}) => {
   const { currency } = useContext(ShopContext);
 
   return (
-    <Link className="text-[#3A3A3A] cursor-pointer" to={`/product/${id}`}>
+    <Link
+      className="text-[#3A3A3A] cursor-pointer relative group"
+      to={`/product/${id}`}
+    >
+      {/* Flags Container */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col space-y-2">
+        {bestSeller && (
+          <span className="bg-[#FFD700] text-[#5C4B42] px-2 py-1 rounded-full text-xs font-medium">
+            Best Seller
+          </span>
+        )}
+        {newArrival && (
+          <span className="bg-[#FF6B6B] text-white px-2 py-1 rounded-full text-xs font-medium">
+            New
+          </span>
+        )}
+        {onSale && (
+          <span className="bg-[#6BCB77] text-white px-2 py-1 rounded-full text-xs font-medium">
+            Sale: {onSalePercent}%
+          </span>
+        )}
+      </div>
+
       <div className="overflow-hidden h-auto w-auto rounded-xl">
         <img
           className="object-contain w-full aspect-square hover:scale-110 transition ease-in-out"
           src={image[0]}
-          alt=""
+          alt={name}
         />
       </div>
       <p className="pt-3 pb-1 text-sm">{name}</p>
-      <p className="text-sm font-medium">
-        {currency} {price}
-      </p>
+      <div className="flex items-baseline gap-2">
+        {onSale ? (
+          <>
+            <p className="text-sm font-medium text-[#D6A7A0]">
+              {currency} {(price * (1 - onSalePercent / 100)).toFixed(2)}
+            </p>
+            <p className="text-xs text-gray-400 line-through">
+              {currency} {price.toFixed(2)}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm font-medium">
+            {currency} {price.toFixed(2)}
+          </p>
+        )}
+      </div>
     </Link>
   );
 };

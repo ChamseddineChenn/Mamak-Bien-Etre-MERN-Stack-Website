@@ -584,10 +584,14 @@ const Collection = () => {
             {filterProducts.map((item, index) => (
               <ProductItem
                 key={index}
-                name={item.name}
                 id={item._id}
+                name={item.name}
                 price={item.price}
                 image={item.image}
+                bestSeller={item.bestSeller}
+                newArrival={item.newArrival}
+                onSale={item.onSale}
+                onSalePercent={item.onSalePercent}
               />
             ))}
           </div>

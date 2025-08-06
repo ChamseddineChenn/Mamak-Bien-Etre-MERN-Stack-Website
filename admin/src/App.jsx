@@ -5,7 +5,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AddProduct from './pages/AddProduct';
 import DisplayProducts from './pages/DisplayProducts';
-import Orders from './pages/Orders';
 import Login from './components/Login';
 import Dashboard from './pages/Dashboard';
 import ProductPreview from './components/ProductPreview';
@@ -13,6 +12,7 @@ import ProductEdit from './components/ProductEdit';
 import PendingOrders from './pages/PendingOrders';
 import CompletedOrders from './pages/CompletedOrders';
 import CancelledOrders from './pages/CancelledOrders';
+import ManageUsers from './pages/ManageUsers';
 
 const App = () => {
   const [token, setToken] = useState(
@@ -42,6 +42,10 @@ const App = () => {
                   element={<Navigate to={'/admin/dashboard'} replace />}
                 />
                 <Route
+                  path="*"
+                  element={<Navigate to={'/admin/dashboard'} replace />}
+                />
+                <Route
                   path="/admin/dashboard"
                   element={<Dashboard token={token} />}
                 />
@@ -53,15 +57,6 @@ const App = () => {
                   path="/admin/displayProducts"
                   element={<DisplayProducts token={token} />}
                 />
-                <Route
-                  path="/admin/orders"
-                  element={<Orders token={token} />}
-                />
-                <Route
-                  path="*"
-                  element={<Navigate to={'/admin/dashboard'} replace />}
-                />
-
                 <Route
                   path="/admin/product-preview/:productId"
                   element={<ProductPreview token={token} />}
@@ -81,6 +76,10 @@ const App = () => {
                 <Route
                   path="/admin/orders/cancelled"
                   element={<CancelledOrders token={token} />}
+                />
+                <Route
+                  path="/admin/users"
+                  element={<ManageUsers token={token} />}
                 />
               </Routes>
             </div>

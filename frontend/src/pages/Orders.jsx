@@ -5,7 +5,8 @@ import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
 
 const Orders = () => {
-  const { currency, getUserOrders, isSessionReady } = useContext(ShopContext);
+  const { currency, getUserOrders, isSessionReady, products } =
+    useContext(ShopContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,11 +24,14 @@ const Orders = () => {
       }
     };
 
-    // Only fetch orders when session is ready
     if (isSessionReady) {
       fetchOrders();
     }
   }, [getUserOrders, isSessionReady]);
+
+  const getProductData = (productId) => {
+    return products.find((product) => product._id === productId) || null;
+  };
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -166,38 +170,41 @@ const Orders = () => {
 
             {/* Order Items */}
             <div className="mt-4">
-              {order.items.map((item, index) => (
-                <div key={index} className="py-4 text-gray-700">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    {/* Product Info Section */}
-                    <div className="flex flex-row w-full">
-                      {/* Fixed image display */}
-                      {item.image ? (
+              {order.items.map((item, index) => {
+                const product = getProductData(item.productId);
+                const imageUrl = product?.image?.[0];
+
+                return (
+                  <div key={index} className="py-4 text-gray-700">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="flex flex-row w-full">
                         <img
                           className="w-16 h-16 sm:w-20 sm:h-20 rounded object-cover"
-                          src={item.image}
+                          src={imageUrl}
                           alt={item.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = assets.placeholder_product;
+                          }}
                         />
-                      ) : (
-                        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                      )}
-                      <div className="flex flex-col ml-5">
-                        <p className="sm:text-lg font-medium">{item.name}</p>
-                        <div className="flex items-center gap-3 mt-2 text-base text-gray-700">
-                          <p className="text-lg">
-                            {currency} {item.priceAtOrder.toFixed(2)}
-                          </p>
-                          <p>Quantity: {item.quantity}</p>
+                        <div className="flex flex-col ml-5">
+                          <p className="sm:text-lg font-medium">{item.name}</p>
+                          <div className="flex items-center gap-3 mt-2 text-base text-gray-700">
+                            <p className="text-lg">
+                              {currency} {item.priceAtOrder.toFixed(2)}
+                            </p>
+                            <p>Quantity: {item.quantity}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {index < order.items.length - 1 && (
-                    <span className="block w-full border-b border-[#A6A58A]/30 rounded-2xl mt-4"></span>
-                  )}
-                </div>
-              ))}
+                    {index < order.items.length - 1 && (
+                      <span className="block w-full border-b border-[#A6A58A]/30 rounded-2xl mt-4"></span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Order Footer */}

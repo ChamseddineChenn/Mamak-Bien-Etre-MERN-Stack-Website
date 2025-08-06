@@ -9,15 +9,15 @@ import {
 import { authenticateUser } from '../middleware/auth.js';
 import adminAuth from '../middleware/adminAuth.js';
 
-const router = express.Router();
+const orderRouter = express.Router();
 
 // Order routes
-router.post('/create-order', authenticateUser, createOrder);
-router.get('/user-orders', authenticateUser, getUserOrders);
-router.get('/:orderId', authenticateUser, getOrderById);
+orderRouter.post('/create-order', authenticateUser, createOrder);
+orderRouter.get('/user-orders', authenticateUser, getUserOrders);
+orderRouter.get('/:orderId', authenticateUser, getOrderById);
 
 // Admin-only routes
-router.patch('/:orderId/status', adminAuth, updateOrderStatus);
-router.get('/admin/orders', adminAuth, getOrdersForAdmin);
+orderRouter.patch('/:orderId/status', adminAuth, updateOrderStatus);
+orderRouter.get('/admin/orders', adminAuth, getOrdersForAdmin);
 
-export default router;
+export default orderRouter;

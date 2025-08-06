@@ -6,7 +6,8 @@ import Title from '../components/Title';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
-  const { getOrderById, currency, isSessionReady } = useContext(ShopContext);
+  const { getOrderById, currency, isSessionReady, products } =
+    useContext(ShopContext);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +33,10 @@ const OrderConfirmation = () => {
       fetchOrder();
     }
   }, [orderId, getOrderById, isSessionReady]);
+
+  const getProductData = (productId) => {
+    return products.find((product) => product._id === productId) || null;
+  };
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -142,34 +147,39 @@ const OrderConfirmation = () => {
           </h2>
 
           <div className="space-y-4">
-            {order.items.map((item, index) => (
-              <div
-                key={index}
-                className="flex justify-between items-center border-b pb-4"
-              >
-                <div className="flex items-center">
-                  {item.image ? (
+            {order.items.map((item, index) => {
+              const product = getProductData(item.productId);
+              const imageUrl = product?.image?.[0];
+
+              return (
+                <div
+                  key={index}
+                  className="flex justify-between items-center border-b pb-4"
+                >
+                  <div className="flex items-center">
                     <img
                       className="w-16 h-16 rounded object-cover mr-4"
-                      src={item.image}
+                      src={imageUrl}
                       alt={item.name}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = assets.placeholder_product;
+                      }}
                     />
-                  ) : (
-                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mr-4" />
-                  )}
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-gray-600 text-sm">
-                      {item.quantity} × {currency}{' '}
-                      {item.priceAtOrder.toFixed(2)}
-                    </p>
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-gray-600 text-sm">
+                        {item.quantity} × {currency}{' '}
+                        {item.priceAtOrder.toFixed(2)}
+                      </p>
+                    </div>
                   </div>
+                  <p className="font-medium">
+                    {currency} {(item.quantity * item.priceAtOrder).toFixed(2)}
+                  </p>
                 </div>
-                <p className="font-medium">
-                  {currency} {(item.quantity * item.priceAtOrder).toFixed(2)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="pt-4 space-y-2">
               <div className="flex justify-between">
@@ -210,7 +220,7 @@ const OrderConfirmation = () => {
 
           <div className="space-y-3">
             <p>
-              <strong>Name:</strong> {order.address.fullName}
+              <strong>Name:</strong> {order.address.recipientName}
             </p>
             <p>
               <strong>Address:</strong> {order.address.street}

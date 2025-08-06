@@ -5,9 +5,15 @@ import Product from '../models/productModel.js';
 const getCart = async (userId, sessionId) => {
   try {
     if (userId) {
-      return await Cart.findOne({ user: userId }).populate('items.productId'); // Keep this as is
+      return await Cart.findOne({ user: userId }).populate({
+        path: 'items.productId',
+        select: 'name price images', // ADD IMAGES HERE
+      });
     } else if (sessionId) {
-      return await Cart.findOne({ sessionId }).populate('items.productId'); // Keep this as is
+      return await Cart.findOne({ sessionId }).populate({
+        path: 'items.productId',
+        select: 'name price images', // ADD IMAGES HERE
+      });
     }
     return null;
   } catch (error) {
