@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { backendURL } from '../constants/Exports';
+import { backendURL, currency } from '../constants/Exports';
 import SearchBar from './SearchBar';
 
 const STATUS_OPTIONS = [
@@ -188,6 +188,62 @@ const OrderList = ({ token, statuses }) => {
                     <tr>
                       <td colSpan="8" className="bg-gray-50 p-4">
                         <div className="border-t border-gray-200 pt-4">
+                          {/* New Address Section */}
+                          <div className="mb-6">
+                            <h3 className="font-semibold mb-3">
+                              Delivery Address:
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    Recipient:
+                                  </span>
+                                  <span>{order.address.recipientName}</span>
+                                </p>
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    Street:
+                                  </span>
+                                  <span>{order.address.street}</span>
+                                </p>
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    City:
+                                  </span>
+                                  <span>{order.address.city}</span>
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    State:
+                                  </span>
+                                  <span>{order.address.state}</span>
+                                </p>
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    ZIP Code:
+                                  </span>
+                                  <span>{order.address.zipCode}</span>
+                                </p>
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    Phone:
+                                  </span>
+                                  <span>{order.address.phoneNumber}</span>
+                                </p>
+                                <p className="flex">
+                                  <span className="font-medium w-28">
+                                    Country:
+                                  </span>
+                                  <span>{order.address.country}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Existing Order Items Section */}
                           <h3 className="font-semibold mb-3">Order Items:</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {order.items.map((item, index) => (
@@ -203,10 +259,11 @@ const OrderList = ({ token, statuses }) => {
                                 </div>
                                 <div className="text-right">
                                   <p className="font-medium">
-                                    TND {item.priceAtOrder.toFixed(2)} each
+                                    {currency} {item.priceAtOrder.toFixed(2)}{' '}
+                                    each
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    Total: TND{' '}
+                                    Total: {currency}{' '}
                                     {(
                                       item.quantity * item.priceAtOrder
                                     ).toFixed(2)}

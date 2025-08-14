@@ -4,6 +4,7 @@ import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const ProductBreadcrumbs = ({ product }) => {
   return (
@@ -26,7 +27,7 @@ const ProductBreadcrumbs = ({ product }) => {
         <li>
           <Link
             to="/collection"
-            state={{ autoSelectCategory: product.category }} // Pass category as navigation state
+            state={{ autoSelectCategory: product.category }}
             className="hover:underline"
           >
             {product.category}
@@ -43,36 +44,131 @@ const ProductBreadcrumbs = ({ product }) => {
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart } = useContext(ShopContext);
-  const [productData, setProductData] = useState(false);
+  const {
+    products,
+    currency,
+    addToCart,
+    getRealTimeStock,
+    user,
+    checkReviewEligibility,
+    addProductReview,
+  } = useContext(ShopContext);
+  const [productData, setProductData] = useState(null);
   const [productImage, setProductImage] = useState('');
   const [activeTab, setActiveTab] = useState('description');
-  const [localQuantity, setLocalQuantity] = useState(0);
+  const [availableStock, setAvailableStock] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [isEligible, setIsEligible] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   const fetchProductData = async () => {
-    products.map((item) => {
-      if (item._id === productId) {
-        setProductData(item);
-        setProductImage(item.image[0]);
-        setLocalQuantity(item.quantity);
-        return null;
+    const product = products.find((item) => item._id === productId);
+    if (product) {
+      setProductData(product);
+      setProductImage(product.image[0]);
+      const stock = await getRealTimeStock(productId);
+      setAvailableStock(stock);
+      setLoading(false);
+      // Check if user has already reviewed this product
+      if (user && product.reviews) {
+        const reviewed = product.reviews.some((r) => r.userId === user._id);
+        setHasReviewed(reviewed);
       }
-    });
-  };
-
-  useEffect(() => {
-    fetchProductData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productId, products]);
-
-  const handleAddToCart = () => {
-    if (localQuantity > 0) {
-      addToCart(productData._id);
-      setLocalQuantity((prev) => Math.max(0, prev - 1)); // Decrement local quantity
-    } else {
-      alert('This product is out of stock');
     }
   };
+
+  const handleAddToCart = async () => {
+    if (availableStock > 0) {
+      try {
+        await addToCart(productData._id);
+        // Refresh stock after adding to cart
+        const updatedStock = await getRealTimeStock(productData._id);
+        setAvailableStock(updatedStock);
+      } catch (error) {
+        console.log(error.message);
+      }
+    } else {
+      toast.warning('This item is out of stock');
+    }
+  };
+
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (!productData?.reviews || productData.reviews.length === 0) return 0;
+
+    const total = productData.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
+    return total / productData.reviews.length;
+  };
+
+  // Adding review for the product
+  const handleAddReview = async () => {
+    if (!reviewRating || !reviewText.trim()) {
+      toast.warning('Please provide both rating and review text');
+      return;
+    }
+
+    setIsLoadingReview(true);
+    try {
+      const result = await addProductReview(
+        productId,
+        reviewRating,
+        reviewText
+      );
+
+      if (result.success) {
+        toast.success('Review submitted successfully!');
+        setProductData(result.product);
+        setReviewRating(0);
+        setReviewText('');
+        setActiveTab('reviews');
+        setHasReviewed(true);
+      } else {
+        toast.error(result.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.log(error.message);
+      toast.error('Failed to submit review');
+    } finally {
+      setIsLoadingReview(false);
+    }
+  };
+
+  // Check eligibility
+  useEffect(() => {
+    const checkEligibility = async () => {
+      if (user && productId) {
+        const eligible = await checkReviewEligibility(user._id, productId);
+        setIsEligible(eligible);
+      }
+    };
+
+    if (user) {
+      checkEligibility();
+    }
+  }, [user, productId, checkReviewEligibility]);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      fetchProductData();
+    }
+  }, [productId, products]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[100vh]">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-[#A6A58A]"></div>
+      </div>
+    );
+  }
+
+  const averageRating = calculateAverageRating();
+  const reviewCount = productData?.reviews?.length || 0;
 
   return productData ? (
     <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A] ">
@@ -113,21 +209,30 @@ const Product = () => {
             {/* Rating */}
             <div className="flex items-center gap-2 mb-6">
               <div className="flex">
-                {[...Array(4)].map((_, i) => (
-                  <img
-                    key={i}
-                    src={assets.star_icon}
-                    alt="★"
-                    className="w-5 h-5"
-                  />
-                ))}
-                <img
-                  src={assets.star_icon}
-                  alt="☆"
-                  className="w-5 h-5 opacity-40"
-                />
+                {[...Array(5)].map((_, i) => {
+                  const ratingValue = i + 1;
+                  return (
+                    <img
+                      key={i}
+                      src={
+                        ratingValue <= Math.floor(averageRating)
+                          ? assets.star_icon
+                          : ratingValue - 0.5 <= averageRating
+                          ? assets.star_half_icon
+                          : assets.star_icon
+                      }
+                      alt={ratingValue <= averageRating ? '★' : '☆'}
+                      className="w-5 h-5"
+                      style={{
+                        opacity: ratingValue > averageRating ? 0.4 : 1,
+                      }}
+                    />
+                  );
+                })}
               </div>
-              <span className="text-sm text-gray-600">(122 reviews)</span>
+              <span className="text-sm text-gray-600">
+                ({reviewCount} reviews)
+              </span>
             </div>
 
             {/* Price */}
@@ -144,15 +249,15 @@ const Product = () => {
             <div className="mb-4">
               <span
                 className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${
-                  localQuantity > 10
+                  availableStock > 10
                     ? 'bg-green-100 text-green-800'
-                    : localQuantity > 0
+                    : availableStock > 0
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-red-100 text-red-800'
                 }`}
               >
-                {localQuantity > 0
-                  ? `${localQuantity} in stock`
+                {availableStock > 0
+                  ? `${availableStock} in stock`
                   : 'Out of stock'}
               </span>
             </div>
@@ -160,14 +265,14 @@ const Product = () => {
             {/* Add to Cart */}
             <button
               className={`w-full sm:w-auto px-8 py-4 rounded-full font-medium mb-10 transition-colors shadow-sm hover:shadow-md ${
-                localQuantity > 0
+                availableStock > 0
                   ? 'bg-[#D6A7A0] hover:bg-[#C79790] text-white'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
               onClick={handleAddToCart}
-              disabled={localQuantity === 0}
+              disabled={availableStock === 0}
             >
-              {localQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+              {availableStock > 0 ? 'Add to Cart' : 'Out of Stock'}
             </button>
 
             {/* Divider */}
@@ -203,7 +308,7 @@ const Product = () => {
             }`}
             onClick={() => setActiveTab('description')}
           >
-            Description
+            Technical Description
           </button>
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors ${
@@ -213,34 +318,104 @@ const Product = () => {
             }`}
             onClick={() => setActiveTab('reviews')}
           >
-            Reviews (122)
+            Reviews ({reviewCount})
           </button>
         </div>
 
         {/* Tab Content */}
-        <div className="bg-[#F9F5F2] p-6 md:p-8 rounded-b-lg">
+        <div className="bg-[#F9F5F2] p-4 md:px-8 rounded-b-lg">
           {activeTab === 'description' ? (
-            <div className="space-y-4 text-[#3A3A3A]/90">
-              <p className="leading-relaxed">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Et
-                ducimus eius eos deleniti cupiditate laudantium ex ea, dolore
-                dolorem quod libero autem doloremque laboriosam ratione corrupti
-                amet, excepturi veniam omnis!
-              </p>
-              <p className="leading-relaxed">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                Molestias nesciunt necessitatibus eligendi est soluta, quis
-                ipsum dolores molestiae possimus doloremque, dolor dolorum
-                fugiat laborum, reprehenderit deleniti modi at reiciendis
-                repellat.
-              </p>
+            <div className="text-[#3A3A3A]/90">
+              {productData.technicalDescription && (
+                <>
+                  <h3 className="font-semibold mt-6">
+                    Technical Specifications
+                  </h3>
+                  <p>{productData.technicalDescription}</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Review items would go here */}
-              <p className="text-gray-500">
-                Review content would be displayed here
-              </p>
+              {user && isEligible && !hasReviewed && (
+                <div className="bg-white p-4 rounded-lg border border-[#E8D9CC]">
+                  <h3 className="font-medium text-[#5C4B42] mb-3">
+                    Write a Review
+                  </h3>
+                  <div className="flex items-center mb-3">
+                    <span className="mr-2 text-[#5C4B42]">Rating:</span>
+                    {[...Array(5)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setReviewRating(i + 1)}
+                        className="mx-1 focus:outline-none"
+                      >
+                        <img
+                          src={
+                            i + 1 <= reviewRating
+                              ? assets.star_icon
+                              : assets.star_icon
+                          }
+                          alt={i + 1 <= reviewRating ? '★' : '☆'}
+                          className="w-6 h-6"
+                          style={{ opacity: i + 1 > reviewRating ? 0.4 : 1 }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="w-full min-h-[100px] p-3 border border-[#E8D9CC] rounded-lg mb-3"
+                    placeholder="Share your experience with this product..."
+                  />
+                  <button
+                    onClick={handleAddReview}
+                    disabled={isLoadingReview}
+                    className="px-4 py-2 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] disabled:opacity-50"
+                  >
+                    {isLoadingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              )}
+
+              {productData.reviews?.length > 0 ? (
+                productData.reviews.map((review) => (
+                  <div
+                    key={review._id || review.createdAt}
+                    className="bg-white p-4 rounded-lg border border-[#E8D9CC]"
+                  >
+                    <div className="flex items-center mb-2">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <img
+                            key={i}
+                            src={
+                              i < review.rating
+                                ? assets.star_icon
+                                : assets.star_icon
+                            }
+                            alt={i < review.rating ? '★' : '☆'}
+                            className="w-4 h-4"
+                            style={{ opacity: i >= review.rating ? 0.4 : 1 }}
+                          />
+                        ))}
+                      </div>
+                      <span className="ml-2 font-medium text-[#5C4B42]">
+                        {review.userName}
+                      </span>
+                      <span className="ml-auto text-sm text-gray-500">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-[#5C4B42]">{review.reviewText}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  No reviews yet. Be the first to review!
+                </p>
+              )}
             </div>
           )}
         </div>

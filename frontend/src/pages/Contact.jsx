@@ -1,4 +1,4 @@
-import NewletterBox from '../components/NewletterBox';
+import NewletterBox from '../components/NewsletterBox';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import React from 'react';

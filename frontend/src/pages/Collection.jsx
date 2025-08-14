@@ -76,6 +76,13 @@ const Collection = () => {
   const [collectionName, setCollectionName] = useState('');
   const location = useLocation();
 
+  //Filters
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [showOnSale, setShowOnSale] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showBestSeller, setShowBestSeller] = useState(false);
+
   const displayChosenCategory = (cat) => {
     if (category === cat) {
       setCategory('');
@@ -114,26 +121,49 @@ const Collection = () => {
   };
 
   const applyFilter = () => {
-    let productsCopy = products.slice();
+    let filtered = [...products];
 
+    // Search filter
     if (search) {
-      productsCopy = productsCopy.filter((item) =>
+      filtered = filtered.filter((item) =>
         item.name.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    if (!category == '') {
-      productsCopy = productsCopy.filter((item) =>
-        category.includes(item.category)
-      );
+    // Category filters
+    if (category) {
+      filtered = filtered.filter((item) => item.category === category);
     }
-    if (!subCategory == '') {
-      productsCopy = productsCopy.filter((item) =>
-        subCategory.includes(item.subCategory)
-      );
+    if (subCategory) {
+      filtered = filtered.filter((item) => item.subCategory === subCategory);
     }
 
-    setFilterProducts(productsCopy);
+    // Price filters
+    if (minPrice) {
+      const min = parseFloat(minPrice);
+      if (!isNaN(min)) {
+        filtered = filtered.filter((item) => item.price >= min);
+      }
+    }
+    if (maxPrice) {
+      const max = parseFloat(maxPrice);
+      if (!isNaN(max)) {
+        filtered = filtered.filter((item) => item.price <= max);
+      }
+    }
+
+    // Featured filters
+    if (showOnSale) {
+      filtered = filtered.filter((item) => item.onSale);
+    }
+    if (showNew) {
+      filtered = filtered.filter((item) => item.newArrival);
+    }
+    if (showBestSeller) {
+      filtered = filtered.filter((item) => item.bestSeller);
+    }
+
+    return filtered;
   };
 
   const sortCollection = () => {
@@ -162,11 +192,22 @@ const Collection = () => {
   }, [location.state]);
 
   useEffect(() => {
-    applyFilter();
+    setFilterProducts(applyFilter());
     displayCollectionName();
     displayProductsCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, subCategory, search, products]);
+  }, [
+    products,
+    search,
+    category,
+    subCategory,
+    sortType,
+    minPrice,
+    maxPrice,
+    showOnSale,
+    showNew,
+    showBestSeller,
+  ]);
 
   useEffect(() => {
     sortCollection();
@@ -358,7 +399,7 @@ const Collection = () => {
       </div>
       <div className="flex flex-col sm:flex-row mt-5 sm:mt-0 ">
         {/* Filter */}
-        <div className="self-start min-w-[20vw] w-[70vw] sm:w-[25vw] md:w-[40] h-auto px-10 md:pt-4 transform -translate-x-[-15vw] sm:-translate-0 md:pb-6 bg-[#E6E4D8] m-2 md:m-5 rounded-2xl transition-all">
+        <div className="self-start min-w-[20vw] w-[70vw] sm:w-[25vw] md:w-[40] h-auto px-10 md:pt-4 md:mt-20 transform -translate-x-[-15vw] sm:-translate-0 md:pb-6 bg-[#E6E4D8] m-2 md:m-5 rounded-2xl transition-all">
           <p
             className="py-2 justify-center text-l md:text-xl flex items-center cursor-pointer gap-10"
             onClick={() => setShowFilter(!showFilter)}
@@ -377,39 +418,25 @@ const Collection = () => {
           >
             <p className="mb-3 text-sm font-medium">Price</p>
             <div className="flex flex-col gap-2 text-sm font-light text-[#3A3A3A]">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <label className="w-24">Maximum:</label>
                 <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
+                  className="bg-gray-100 rounded ml-2 p-1 w-full"
+                  type="number"
+                  placeholder="eg: 5000"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
                 />
-                <p className="">
-                  Maximum:
-                  <input
-                    className="bg-gray-100 rounded ml-2 p-1 w-full"
-                    type="text"
-                    placeholder="eg: 5000$"
-                  />
-                </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <label className="w-24">Minimum:</label>
                 <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
+                  className="bg-gray-100 rounded ml-2 p-1 w-full"
+                  type="number"
+                  placeholder="eg: 80"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
                 />
-                <p className="">
-                  Minimum:
-                  <input
-                    className="bg-gray-100 rounded ml-2 p-1 w-full"
-                    type="text"
-                    placeholder="eg: 80$"
-                  />
-                </p>
               </div>
             </div>
           </div>
@@ -420,120 +447,53 @@ const Collection = () => {
           >
             <p className="mb-3 text-sm font-medium">Featured</p>
             <div className="flex flex-col gap-2 text-sm font-light text-[#3A3A3A]">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <input
-                  className="w-3"
+                  className="w-4 h-4"
                   type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
+                  checked={showOnSale}
+                  onChange={(e) => setShowOnSale(e.target.checked)}
+                  id="onSaleCheckbox"
                 />
-                <p className="">On Sale</p>
+                <label htmlFor="onSaleCheckbox">On Sale</label>
               </div>
-              <div className="flex gap-2">
-                <input className="w-3" type="checkbox" name="" id="" />
-                <p className="">Limited Edition</p>
-              </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <input
-                  className="w-3"
+                  className="w-4 h-4"
                   type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
+                  checked={showNew}
+                  onChange={(e) => setShowNew(e.target.checked)}
+                  id="newCheckbox"
                 />
-                <p className="">New</p>
+                <label htmlFor="newCheckbox">New</label>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <input
-                  className="w-3"
+                  className="w-4 h-4"
                   type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
+                  checked={showBestSeller}
+                  onChange={(e) => setShowBestSeller(e.target.checked)}
+                  id="bestSellerCheckbox"
                 />
-                <p className="">Best Seller</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Bundles</p>
+                <label htmlFor="bestSellerCheckbox">Best Seller</label>
               </div>
             </div>
           </div>
-          <div
-            className={`border-t-2 border-gray-100 pl-5 py-3 mt-6 ${
-              showFilter ? '' : 'hidden'
-            } sm:block`}
-          >
-            <p className="mb-3 text-sm font-medium">Flavors</p>
-            <div className="flex flex-col gap-2 text-sm font-light text-[#3A3A3A]">
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Floral</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Fresh/Citrus</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Sweet/Grourmand</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Earthy</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Spicy</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-3"
-                  type="checkbox"
-                  value={'Candles'}
-                  name=""
-                  id=""
-                />
-                <p className="">Herbal</p>
-              </div>
-            </div>
+
+          {/* Reset Filters Button */}
+          <div className="mt-6 px-5">
+            <button
+              className="w-full py-2 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] transition-colors"
+              onClick={() => {
+                setMinPrice('');
+                setMaxPrice('');
+                setShowOnSale(false);
+                setShowNew(false);
+                setShowBestSeller(false);
+              }}
+            >
+              Reset Filters
+            </button>
           </div>
         </div>
         <div className="flex-1 min-w-[65vw] min-h-[100vh] md:min-w-[74vw] m-2 md:m-5 p-2">
@@ -581,9 +541,9 @@ const Collection = () => {
           </div>
           {/* Actual placement of the products */}
           <div className="grid justify-items-center grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 gap-y-6 m-5 lg:mr-5 xl:mr-0">
-            {filterProducts.map((item, index) => (
+            {filterProducts.map((item) => (
               <ProductItem
-                key={index}
+                key={item._id}
                 id={item._id}
                 name={item.name}
                 price={item.price}
@@ -592,6 +552,7 @@ const Collection = () => {
                 newArrival={item.newArrival}
                 onSale={item.onSale}
                 onSalePercent={item.onSalePercent}
+                quantity={item.quantity} // Pass quantity prop
               />
             ))}
           </div>

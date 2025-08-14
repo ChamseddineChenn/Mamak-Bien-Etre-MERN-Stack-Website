@@ -9,6 +9,9 @@ import userRouter from './routes/userRoute.js';
 import productRouter from './routes/productRoute.js';
 import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoute.js';
+import newsletterRouter from './routes/newsletterRoute.js';
+import dashboardRouter from './routes/dashboardRoute.js';
+import analyticsRouter from './routes/analyticsRoute.js';
 
 // App Config
 const app = express();
@@ -66,7 +69,7 @@ app.use(
 
 // Add session ID to request
 app.use((req, res, next) => {
-  req.sessionId = req.sessionID; // Attach session ID to request
+  req.sessionId = req.sessionID;
   next();
 });
 
@@ -82,6 +85,9 @@ app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
+app.use('/api/newsletter', newsletterRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/analytics', analyticsRouter);
 
 app.get('/', (req, res) => {
   res.send('API Working');

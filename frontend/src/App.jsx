@@ -15,6 +15,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserProfile from './pages/UserProfile';
 import OrderConfirmation from './pages/OrderConfirmation';
+import NewsletterVerification from './pages/NewsletterVerification';
+import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -50,6 +52,8 @@ const App = () => {
           path="/order-confirmation/:orderId"
           element={<OrderConfirmation />}
         />
+        <Route path="/verify-newsletter" element={<NewsletterVerification />} />
+        <Route path="/unsubscribe" element={<NewsletterUnsubscribe />} />
       </Routes>
       <Footer />
     </div>

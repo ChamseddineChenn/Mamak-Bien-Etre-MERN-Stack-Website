@@ -5,9 +5,13 @@ import {
   displayProducts,
   productDetails,
   editProduct,
+  getProductStock,
+  addReview,
+  getLowStockProducts,
 } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
+import { authenticateUser } from '../middleware/auth.js';
 
 const productRouter = express.Router();
 
@@ -38,5 +42,21 @@ productRouter.put(
 productRouter.post('/removeProduct', adminAuth, removeProduct);
 productRouter.get('/displayProducts', displayProducts);
 productRouter.post('/productDetails', adminAuth, productDetails);
+productRouter.get('/stock/:id', getProductStock);
+productRouter.post('/addReview', authenticateUser, addReview);
+productRouter.get('/low-stock', adminAuth, getLowStockProducts);
+
+productRouter.get('/:id', async (req, res) => {
+  try {
+    // Increment view count
+    await Product.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+
+    // Then get product details
+    const product = await productModel.findById(req.params.id);
+    res.json({ success: true, product });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
 
 export default productRouter;

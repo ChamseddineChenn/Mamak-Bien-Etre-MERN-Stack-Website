@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import productModel from '../models/productModel.js';
+import orderModel from '../models/orderModel.js';
+import userModel from '../models/userModel.js';
 
 // Helper functions
 
@@ -77,6 +79,7 @@ const addProduct = async (req, res) => {
     const productData = {
       name: req.body.name,
       description: req.body.description,
+      technicalDescription: req.body.technicalDescription || '',
       price: Number(req.body.price),
       category: req.body.category,
       subCategory: req.body.subCategory,
@@ -86,7 +89,7 @@ const addProduct = async (req, res) => {
       onSale: req.body.onSale === 'true',
       onSalePercent: Number(req.body.onSalePercent || 0),
       date: Date.now(),
-      image: [], // Initialize empty image array
+      image: [],
     };
 
     // Process images in parallel
@@ -125,7 +128,6 @@ const addProduct = async (req, res) => {
 };
 
 // Remove product function
-
 const removeProduct = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.body.id);
@@ -137,7 +139,6 @@ const removeProduct = async (req, res) => {
 };
 
 // Edit product function
-
 const editProduct = async (req, res) => {
   try {
     const { id } = req.body;
@@ -226,7 +227,8 @@ const editProduct = async (req, res) => {
 
     // Add images to update data
     updateData.image = updatedImages;
-
+    updateData.technicalDescription =
+      req.body.technicalDescription || product.technicalDescription;
     // Update product in database
     const updatedProduct = await productModel.findByIdAndUpdate(
       id,
@@ -249,7 +251,6 @@ const editProduct = async (req, res) => {
 };
 
 // List product function
-
 const displayProducts = async (req, res) => {
   try {
     const products = await productModel.find({});
@@ -261,7 +262,6 @@ const displayProducts = async (req, res) => {
 };
 
 // Single product info function
-
 const productDetails = async (req, res) => {
   try {
     const { productId } = req.body;
@@ -273,10 +273,128 @@ const productDetails = async (req, res) => {
   }
 };
 
+// Get product stock
+const getProductStock = async (req, res) => {
+  try {
+    const product = await productModel.findById(req.params.id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Product not found' });
+    }
+    res.json({ success: true, stock: product.quantity });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Review related functions
+
+// Add review functionality
+export const addReview = async (req, res) => {
+  try {
+    const { productId, rating, reviewText } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    // Validate input
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid rating (1-5 required)',
+      });
+    }
+
+    // Check if user has already reviewed this product
+    const existingReview = await productModel.findOne({
+      _id: productId,
+      'reviews.userId': userId,
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this product',
+      });
+    }
+
+    // Check if user has ordered the product
+    const hasOrdered = await orderModel.findOne({
+      user: userId,
+      'items.productId': productId,
+      status: 'delivered',
+    });
+
+    if (!hasOrdered) {
+      return res.status(403).json({
+        success: false,
+        message: 'You must purchase this product before reviewing',
+      });
+    }
+
+    // Get user's name
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Add review
+    const updatedProduct = await productModel.findByIdAndUpdate(
+      productId,
+      {
+        $push: {
+          reviews: {
+            rating,
+            userId,
+            userName: user.fullName,
+            reviewText,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Review added successfully',
+      product: updatedProduct,
+    });
+  } catch (error) {
+    console.error('Add review error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error: ' + error.message,
+    });
+  }
+};
+
+const getLowStockProducts = async (req, res) => {
+  try {
+    const threshold = parseInt(req.query.threshold) || 5;
+    const products = await productModel.find({
+      quantity: { $lte: threshold },
+    });
+    res.json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export {
   addProduct,
   removeProduct,
   displayProducts,
   productDetails,
   editProduct,
+  getProductStock,
+  getLowStockProducts,
 };

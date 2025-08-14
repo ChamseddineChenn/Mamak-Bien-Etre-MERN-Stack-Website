@@ -80,14 +80,6 @@ export const createOrder = async (req, res) => {
         priceAtOrder: price,
         name: product.name,
       });
-
-      // Prepare product quantity update
-      productUpdates.push({
-        updateOne: {
-          filter: { _id: product._id },
-          update: { $inc: { quantity: -quantity } },
-        },
-      });
     }
 
     // Add delivery fee
@@ -110,9 +102,13 @@ export const createOrder = async (req, res) => {
     session.startTransaction();
 
     try {
-      // Update product quantities
-      if (productUpdates.length > 0) {
-        await Product.bulkWrite(productUpdates, { session });
+      // Update product quantities AFTER saving order
+      for (const item of cart.items) {
+        await Product.findByIdAndUpdate(
+          item.productId._id,
+          { $inc: { quantity: -item.quantity } },
+          { session }
+        );
       }
 
       // Save order
@@ -334,6 +330,64 @@ export const getOrdersForAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error: ' + error.message,
+    });
+  }
+};
+
+export const checkReviewEligibility = async (req, res) => {
+  try {
+    const { userId, productId } = req.body;
+
+    const hasOrdered = await Order.findOne({
+      user: userId,
+      'items.productId': productId,
+      status: 'delivered',
+    });
+
+    res.json({
+      success: true,
+      isEligible: !!hasOrdered,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error checking eligibility: ' + error.message,
+    });
+  }
+};
+
+export const getStaleOrders = async (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours) || 48;
+    const dateThreshold = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+    const orders = await Order.find({
+      status: { $in: ['processing', 'awaiting_delivery'] },
+      createdAt: { $lte: dateThreshold },
+    });
+
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getRecentOrders = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

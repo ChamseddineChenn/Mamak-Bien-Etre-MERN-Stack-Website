@@ -13,6 +13,21 @@ const productSchema = new mongoose.Schema({
   newArrival: { type: Boolean, required: true },
   onSale: { type: Boolean, required: true },
   onSalePercent: { type: Number, required: true, min: 0, max: 100, default: 0 },
+  technicalDescription: { type: String, default: '' },
+  views: { type: Number, default: 0 },
+  reviews: [
+    {
+      rating: { type: Number, required: true, min: 1, max: 5 },
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        required: true,
+      },
+      userName: { type: String, required: true },
+      reviewText: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 const productModel =

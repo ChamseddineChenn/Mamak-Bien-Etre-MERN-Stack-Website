@@ -11,6 +11,7 @@ const ProductItem = ({
   newArrival,
   onSale,
   onSalePercent,
+  quantity, // Add quantity prop
 }) => {
   const { currency } = useContext(ShopContext);
 
@@ -19,6 +20,13 @@ const ProductItem = ({
       className="text-[#3A3A3A] cursor-pointer relative group"
       to={`/product/${id}`}
     >
+      {quantity === 0 && (
+        <div className="absolute top-0 left-0 w-full h-[90%] bg-opacity-60 flex items-center justify-center z-10">
+          <span className="text-[#A6A58A] bg-black/70 w-full m-auto text-center font-bold text-lg mx-2 rounded">
+            SOLD OUT
+          </span>
+        </div>
+      )}
       {/* Flags Container */}
       <div className="absolute top-3 left-3 z-10 flex flex-col space-y-2">
         {bestSeller && (

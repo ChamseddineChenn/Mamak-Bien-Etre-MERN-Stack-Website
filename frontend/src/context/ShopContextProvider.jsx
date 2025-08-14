@@ -28,20 +28,20 @@ const ShopContextProvider = (props) => {
   const isSessionInitialized = useRef(false);
   const [user, setUser] = useState(null);
 
+  // Products ----------------------------------------------------------------------------------------
   const getProductsData = useCallback(async () => {
     try {
       const URL = `${backendURL}/api/product/displayProducts`;
       const response = await axios.get(URL);
       if (response.data.success) {
         setProducts(response.data.products);
-      } else {
-        toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(error.message);
     }
   }, [backendURL]);
 
+  // Users ----------------------------------------------------------------------------------------
   const fetchUserProfile = useCallback(async () => {
     if (!token) return;
 
@@ -57,7 +57,6 @@ const ShopContextProvider = (props) => {
       );
 
       if (response.data.success && response.data.user) {
-        console.log('USER: ----------> ' + response.data.user._id);
         setUser(response.data.user);
       }
     } catch (error) {
@@ -65,24 +64,30 @@ const ShopContextProvider = (props) => {
     }
   }, [backendURL, token]);
 
-  const updateUserDeliveryAddress = useCallback(
-    async (address) => {
-      if (!token) return;
-
+  const updateUserProfile = useCallback(
+    async (fullName) => {
       try {
-        setUser((prev) => ({
-          ...prev,
-          deliveryAddress: address,
-        }));
-
-        await axiosInstance.post(
-          `${backendURL}/api/user/delivery-address`,
-          address,
+        const response = await axiosInstance.put(
+          `${backendURL}/api/user/profile`,
+          { fullName },
           { withCredentials: true }
         );
-        return true;
+
+        if (response.data.success) {
+          setUser((prev) => ({
+            ...prev,
+            fullName: response.data.user.fullName,
+          }));
+          return true;
+        } else {
+          throw new Error(response.data.message);
+        }
       } catch (error) {
-        throw error.response?.data?.message || 'Failed to save address';
+        throw new Error(
+          error.response?.data?.message ||
+            error.message ||
+            'Profile update failed'
+        );
       }
     },
     [backendURL, token]
@@ -119,35 +124,112 @@ const ShopContextProvider = (props) => {
     [backendURL, token, navigate]
   );
 
-  const updateUserProfile = useCallback(
-    async (fullName) => {
+  // Orders ----------------------------------------------------------------------------------------
+  const updateUserDeliveryAddress = useCallback(
+    async (address) => {
+      if (!token) return;
+
       try {
-        const response = await axiosInstance.put(
-          `${backendURL}/api/user/profile`,
-          { fullName },
+        setUser((prev) => ({
+          ...prev,
+          deliveryAddress: address,
+        }));
+
+        await axiosInstance.post(
+          `${backendURL}/api/user/delivery-address`,
+          address,
           { withCredentials: true }
         );
-
-        if (response.data.success) {
-          setUser((prev) => ({
-            ...prev,
-            fullName: response.data.user.fullName,
-          }));
-          return true;
-        } else {
-          throw new Error(response.data.message);
-        }
+        return true;
       } catch (error) {
-        throw new Error(
-          error.response?.data?.message ||
-            error.message ||
-            'Profile update failed'
-        );
+        throw error.response?.data?.message || 'Failed to save address';
       }
     },
     [backendURL, token]
   );
 
+  const createOrder = useCallback(
+    async (orderData) => {
+      try {
+        const response = await axiosInstance.post(
+          `${backendURL}/api/order/create-order`,
+          {
+            address: orderData.address,
+            paymentMethod: orderData.paymentMethod,
+          },
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          setCartItems({});
+          getProductsData(); // Refresh products after order
+          return response.data.order;
+        }
+        throw new Error(response.data.message || 'Failed to create order');
+      } catch (error) {
+        throw new Error(error.response?.data?.message || error.message);
+      }
+    },
+    [backendURL, getProductsData]
+  );
+
+  const getRealTimeStock = useCallback(
+    async (productId) => {
+      try {
+        const response = await axiosInstance.get(
+          `${backendURL}/api/product/stock/${productId}`,
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          return response.data.stock;
+        }
+        return 0;
+      } catch (error) {
+        console.error('Stock check error:', error);
+        return 0;
+      }
+    },
+    [backendURL]
+  );
+
+  const getOrderById = useCallback(
+    async (orderId) => {
+      try {
+        const response = await axiosInstance.get(
+          `${backendURL}/api/order/${orderId}`,
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          return response.data.order;
+        }
+        throw new Error('Order not found');
+      } catch (error) {
+        throw new Error(error.response?.data?.message || error.message);
+      }
+    },
+    [backendURL]
+  );
+
+  const getUserOrders = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${backendURL}/api/order/user-orders`,
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        return response.data.orders;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to get orders:', error);
+      return [];
+    }
+  }, [backendURL]);
+
+  // Cart ----------------------------------------------------------------------------------------
   const fetchCart = useCallback(async () => {
     try {
       setIsCartLoading(true);
@@ -215,6 +297,12 @@ const ShopContextProvider = (props) => {
   const updateCartItemQuantity = useCallback(
     async (itemId, newQuantity) => {
       try {
+        const currentStock = await getRealTimeStock(itemId);
+        if (newQuantity > currentStock) {
+          toast.warning(`Only ${currentStock} available`);
+          return { success: false, maxAllowed: currentStock };
+        }
+
         const response = await axiosInstance.put(
           `${backendURL}/api/cart/updateCartItem`,
           { productId: itemId, quantity: newQuantity },
@@ -252,7 +340,7 @@ const ShopContextProvider = (props) => {
         throw error;
       }
     },
-    [backendURL, fetchCart]
+    [backendURL, fetchCart, getRealTimeStock]
   );
 
   const mergeCarts = useCallback(async () => {
@@ -295,66 +383,60 @@ const ShopContextProvider = (props) => {
     }, 0);
   }, [cartItems, products]);
 
-  const createOrder = useCallback(
-    async (orderData) => {
+  // Reviews -----------------------------------------------------------------------------
+
+  const addProductReview = useCallback(
+    async (productId, rating, reviewText) => {
       try {
         const response = await axiosInstance.post(
-          `${backendURL}/api/order/create-order`,
-          {
-            address: orderData.address,
-            paymentMethod: orderData.paymentMethod,
-          },
+          `${backendURL}/api/product/addReview`,
+          { productId, rating, reviewText },
           { withCredentials: true }
         );
 
         if (response.data.success) {
-          setCartItems({});
-          return response.data.order;
+          // Update products state with new review
+          setProducts((prev) =>
+            prev.map((product) =>
+              product._id === productId ? response.data.product : product
+            )
+          );
+
+          return { success: true, product: response.data.product };
         }
-        throw new Error(response.data.message || 'Failed to create order');
+
+        return { success: false, message: response.data.message };
       } catch (error) {
-        throw new Error(error.response?.data?.message || error.message);
+        console.error('Review submission error:', error);
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to submit review',
+        };
       }
     },
     [backendURL]
   );
 
-  const getOrderById = useCallback(
-    async (orderId) => {
+  const checkReviewEligibility = useCallback(
+    async (userId, productId) => {
+      if (!userId || !productId) return false;
+
       try {
-        const response = await axiosInstance.get(
-          `${backendURL}/api/order/${orderId}`,
-          { withCredentials: true }
+        const response = await axios.post(
+          `${backendURL}/api/order/check-review-eligibility`,
+          { userId, productId },
+          { headers: { token: localStorage.getItem('token') } }
         );
-
-        if (response.data.success) {
-          return response.data.order; // Ensure this is the populated order
-        }
-        throw new Error('Order not found');
+        return response.data?.isEligible || false;
       } catch (error) {
-        throw new Error(error.response?.data?.message || error.message);
+        console.error('Eligibility check error:', error);
+        return false;
       }
     },
     [backendURL]
   );
 
-  const getUserOrders = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get(
-        `${backendURL}/api/order/user-orders`,
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        return response.data.orders;
-      }
-      return [];
-    } catch (error) {
-      console.error('Failed to get orders:', error);
-      return [];
-    }
-  }, [backendURL]);
-
+  // UseEffects right here ->
   useEffect(() => {
     getProductsData();
   }, [getProductsData]);
@@ -437,6 +519,9 @@ const ShopContextProvider = (props) => {
       updateUserDeliveryAddress,
       changePassword,
       updateUserProfile,
+      getRealTimeStock,
+      checkReviewEligibility,
+      addProductReview,
     }),
     [
       products,
@@ -460,6 +545,9 @@ const ShopContextProvider = (props) => {
       updateUserDeliveryAddress,
       changePassword,
       updateUserProfile,
+      getRealTimeStock,
+      checkReviewEligibility,
+      addProductReview,
     ]
   );
 

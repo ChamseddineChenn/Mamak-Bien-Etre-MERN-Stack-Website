@@ -20,6 +20,7 @@ const AddProduct = ({ token }) => {
     newArrival: false,
     onSale: false,
     onSalePercent: '',
+    technicalDescription: '',
   });
 
   // State for validation errors
@@ -395,6 +396,20 @@ const AddProduct = ({ token }) => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Technical Description */}
+        <div className="bg-[#F9F5F2] p-5 rounded-lg">
+          <label className="block text-base font-medium text-[#5C4B42] mb-2">
+            Technical Description
+          </label>
+          <textarea
+            name="technicalDescription"
+            value={formData.technicalDescription}
+            onChange={handleChange}
+            className="w-full min-h-[120px] px-4 py-3 border border-[#E8D9CC] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#D6A7A0]"
+            placeholder="Enter technical specifications"
+          />
         </div>
 
         {/* Submit Button */}
