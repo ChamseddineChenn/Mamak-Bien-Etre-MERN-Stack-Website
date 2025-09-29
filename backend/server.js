@@ -4,6 +4,8 @@ import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
 import { MongoClient } from 'mongodb';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import connectDB from './config/mongodb.js';
 import connectCloudinary from './config/cloudinary.js';
@@ -19,6 +21,10 @@ import paymentRouter from './routes/paymentRoute.js';
 // App Config
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Fix for ES modules __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function initializeServices() {
   try {
@@ -65,14 +71,32 @@ async function configureApp() {
   app.set('trust proxy', 1);
   app.use(express.json());
 
-  // CORS configuration
-  const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL];
+  // CORS configuration - only for external requests in development
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_URL,
+    'http://localhost:5173', // Frontend dev server
+    'http://localhost:5174', // Admin dev server
+  ].filter(Boolean);
+
   app.use(
     cors({
       origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin (like same-origin requests, mobile apps, or server-to-server)
+        if (!origin) return callback(null, true);
+
+        // Allow same-origin requests (when frontend is served from the same domain)
+        if (
+          origin === `http://localhost:${port}` ||
+          origin === `https://localhost:${port}`
+        ) {
+          return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
+          console.log('CORS blocked for origin:', origin);
           callback(new Error('Not allowed by CORS'));
         }
       },
@@ -96,9 +120,7 @@ async function configureApp() {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         httpOnly: true,
         domain:
-          process.env.NODE_ENV === 'development'
-            ? 'localhost'
-            : '.yourdomain.com',
+          process.env.NODE_ENV === 'development' ? 'localhost' : undefined,
       },
     })
   );
@@ -132,8 +154,29 @@ async function configureApp() {
   app.use('/api/analytics', analyticsRouter);
   app.use('/api/payment', paymentRouter);
 
+  // Serve static files for frontend and admin
+  const frontendPath = path.join(__dirname, '../frontend/dist');
+  const adminPath = path.join(__dirname, '../admin/dist');
+
+  // Serve frontend static files
+  app.use(express.static(frontendPath));
+
+  // Serve admin static files under /admin route
+  app.use('/admin', express.static(adminPath));
+
+  // API status route
+  app.get('/api', (req, res) => {
+    res.json({ message: 'Mamak Ecommerce API Working', timestamp: new Date() });
+  });
+
+  // Serve admin SPA - handle all admin routes
+  app.get('/admin', (req, res) => {
+    res.sendFile(path.join(adminPath, 'index.html'));
+  });
+
+  // Serve frontend SPA - handle all other routes
   app.get('/', (req, res) => {
-    res.send('API Working');
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 
   // Start server
