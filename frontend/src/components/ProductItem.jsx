@@ -1,6 +1,7 @@
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const ProductItem = ({
   id,
@@ -14,6 +15,7 @@ const ProductItem = ({
   quantity, // Add quantity prop
 }) => {
   const { currency } = useContext(ShopContext);
+  const { t } = useTranslation();
 
   return (
     <Link
@@ -23,7 +25,7 @@ const ProductItem = ({
       {quantity === 0 && (
         <div className="absolute top-0 left-0 w-full h-[90%] bg-opacity-60 flex items-center justify-center z-10">
           <span className="text-[#A6A58A] bg-black/70 w-full m-auto text-center font-bold text-lg mx-2 rounded">
-            SOLD OUT
+            {t('sold_out')}
           </span>
         </div>
       )}
@@ -31,17 +33,17 @@ const ProductItem = ({
       <div className="absolute top-3 left-3 z-10 flex flex-col space-y-2">
         {bestSeller && (
           <span className="bg-[#FFD700] text-[#5C4B42] px-2 py-1 rounded-full text-xs font-medium">
-            Best Seller
+            {t('best_seller')}
           </span>
         )}
         {newArrival && (
           <span className="bg-[#FF6B6B] text-white px-2 py-1 rounded-full text-xs font-medium">
-            New
+            {t('new')}
           </span>
         )}
         {onSale && (
           <span className="bg-[#6BCB77] text-white px-2 py-1 rounded-full text-xs font-medium">
-            Sale: {onSalePercent}%
+            {t('sale')}: {onSalePercent}%
           </span>
         )}
       </div>

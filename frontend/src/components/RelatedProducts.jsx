@@ -2,10 +2,12 @@ import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import Title from './Title';
 import ProductItem from './ProductItem';
+import { useTranslation } from 'react-i18next';
 
 const RelatedProducts = ({ category }) => {
   const { products } = useContext(ShopContext);
   const [related, setRelated] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (products.length > 0) {
@@ -18,7 +20,7 @@ const RelatedProducts = ({ category }) => {
   return (
     <div className="my-24">
       <div className="text-center text-3xl py-2">
-        <Title primaryText={'Related'} secondaryText={'Products'} />
+        <Title primaryText={t('related')} secondaryText={t('products')} />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6 px-10">
         {related.map((item, index) => (

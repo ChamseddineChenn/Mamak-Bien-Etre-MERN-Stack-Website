@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ShopContext } from '../context/ShopContext';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   // State management
@@ -15,6 +16,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
 
   // Context
   const { token, setToken, navigate, mergeCarts, backendURL } =
@@ -64,28 +66,28 @@ const Login = () => {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('error_email_required');
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = t('error_email_invalid');
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('error_password_required');
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = t('error_password_length');
     }
 
     // Sign Up specific validations
     if (currentState === 'Sign Up') {
       if (!formData.fullName.trim()) {
-        newErrors.fullName = 'Full name is required';
+        newErrors.fullName = t('error_fullName_required');
       }
 
       if (!formData.confirmPassword) {
-        newErrors.confirmPassword = 'Please confirm your password';
+        newErrors.confirmPassword = t('error_confirmPassword_required');
       } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = t('error_passwords_mismatch');
       }
     }
 
@@ -135,24 +137,24 @@ const Login = () => {
         mergeCarts();
         toast.success(
           currentState === 'Sign Up'
-            ? 'Registration successful!'
-            : 'Login successful!'
+            ? t('registration_successful')
+            : t('login_successful')
         );
       } else {
-        toast.error(response.data.message || 'Authentication failed');
+        toast.error(response.data.message || t('authentication_failed'));
       }
     } catch (error) {
       // Handle different error types
-      let errorMessage = 'Authentication error';
+      let errorMessage = t('authentication_error');
 
       if (error.response) {
         // Server responded with error status
         errorMessage =
           error.response.data.message ||
-          `Server error: ${error.response.status}`;
+          `${t('server_error')}: ${error.response.status}`;
       } else if (error.request) {
         // No response received
-        errorMessage = 'Network error - please check your connection';
+        errorMessage = t('network_error');
       }
 
       toast.error(errorMessage);
@@ -166,6 +168,11 @@ const Login = () => {
     setCurrentState((prev) => (prev === 'Login' ? 'Sign Up' : 'Login'));
   };
 
+  // Get the translated title based on current state
+  const getTranslatedTitle = () => {
+    return currentState === 'Login' ? t('login') : t('sign_up');
+  };
+
   return (
     <div className="min-h-[100vh] flex flex-col items-center justify-start bg-[#F5F3EB] mt-19 pt-5 px-4">
       <form
@@ -174,21 +181,25 @@ const Login = () => {
         className={`flex flex-col items-center w-full max-w-md px-8 py-10 rounded-xl gap-6 text-[#3A3A3A] bg-[#E6E4D8] shadow-lg ${
           currentState === 'Login' ? 'min-h-[50vh]' : 'min-h-[65vh]'
         }`}
-        aria-label={currentState === 'Login' ? 'Login form' : 'Sign up form'}
+        aria-label={
+          currentState === 'Login'
+            ? t('login_form_aria')
+            : t('signup_form_aria')
+        }
       >
         {/* Header Section */}
         <div className="w-full text-center mb-6">
           <div className="inline-flex items-center justify-center gap-3">
             <hr className="border-none h-[1.5px] w-8 bg-[#C4A484] mt-2" />
             <h1 className="tinos-regular text-3xl text-[#5C4B42]">
-              {currentState}
+              {getTranslatedTitle()}
             </h1>
             <hr className="border-none h-[1.5px] w-8 bg-[#C4A484] mt-2" />
           </div>
           <p className="text-[#5C4B42]/80 mt-2">
             {currentState === 'Login'
-              ? 'Welcome back! Please enter your details'
-              : 'Join us today! Create your account'}
+              ? t('welcome_back_message')
+              : t('join_us_message')}
           </p>
         </div>
 
@@ -203,12 +214,12 @@ const Login = () => {
                     ? 'border-red-500'
                     : 'border-[#A6A58A] focus:ring-[#C4A484]'
                 }`}
-                placeholder="Full Name"
+                placeholder={t('full_name_placeholder')}
                 type="text"
                 required
                 onChange={handleInputChange}
                 value={formData.fullName}
-                aria-label="Full Name"
+                aria-label={t('full_name_aria')}
                 aria-invalid={!!errors.fullName}
                 aria-describedby={
                   errors.fullName ? 'fullName-error' : undefined
@@ -230,12 +241,12 @@ const Login = () => {
                   ? 'border-red-500'
                   : 'border-[#A6A58A] focus:ring-[#C4A484]'
               }`}
-              placeholder="Email"
+              placeholder={t('email_placeholder')}
               type="email"
               required
               onChange={handleInputChange}
               value={formData.email}
-              aria-label="Email Address"
+              aria-label={t('email_aria')}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'email-error' : undefined}
             />
@@ -254,12 +265,12 @@ const Login = () => {
                   ? 'border-red-500'
                   : 'border-[#A6A58A] focus:ring-[#C4A484]'
               }`}
-              placeholder="Password"
+              placeholder={t('password_placeholder')}
               type={showPassword ? 'text' : 'password'}
               required
               onChange={handleInputChange}
               value={formData.password}
-              aria-label="Password"
+              aria-label={t('password_aria')}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? 'password-error' : undefined}
             />
@@ -267,7 +278,9 @@ const Login = () => {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={
+                showPassword ? t('hide_password_aria') : t('show_password_aria')
+              }
             >
               {showPassword ? '🙈' : '👁️'}
             </button>
@@ -287,12 +300,12 @@ const Login = () => {
                     ? 'border-red-500'
                     : 'border-[#A6A58A] focus:ring-[#C4A484]'
                 }`}
-                placeholder="Confirm Password"
+                placeholder={t('confirm_password_placeholder')}
                 type={showPassword ? 'text' : 'password'}
                 required
                 onChange={handleInputChange}
                 value={formData.confirmPassword}
-                aria-label="Confirm Password"
+                aria-label={t('confirm_password_aria')}
                 aria-invalid={!!errors.confirmPassword}
                 aria-describedby={
                   errors.confirmPassword ? 'confirmPassword-error' : undefined
@@ -322,10 +335,10 @@ const Login = () => {
           aria-busy={isSubmitting}
         >
           {isSubmitting
-            ? 'Processing...'
+            ? t('processing')
             : currentState === 'Login'
-            ? 'Sign In'
-            : 'Create Account'}
+            ? t('sign_in')
+            : t('create_account')}
         </button>
 
         {/* Footer Links */}
@@ -333,22 +346,22 @@ const Login = () => {
           {currentState === 'Login' ? (
             <>
               <p className="text-[#5C4B42]">
-                Forgot your password?{' '}
+                {t('forgot_password')}{' '}
                 <button
                   type="button"
                   className="text-[#D6A7A0] hover:underline cursor-pointer"
-                  aria-label="Reset password"
+                  aria-label={t('reset_password_aria')}
                 >
-                  Click here!
+                  {t('click_here')}
                 </button>
               </p>
               <button
                 type="button"
                 className="text-[#D6A7A0] hover:underline cursor-pointer"
                 onClick={toggleAuthState}
-                aria-label="Switch to sign up"
+                aria-label={t('switch_to_signup_aria')}
               >
-                Create account
+                {t('create_account_link')}
               </button>
             </>
           ) : (
@@ -356,9 +369,9 @@ const Login = () => {
               type="button"
               className="text-[#D6A7A0] hover:underline cursor-pointer"
               onClick={toggleAuthState}
-              aria-label="Switch to login"
+              aria-label={t('switch_to_login_aria')}
             >
-              Already have an account? Login here
+              {t('already_have_account')}
             </button>
           )}
         </div>
@@ -366,13 +379,13 @@ const Login = () => {
 
       {/* Security Footer */}
       <div className="mt-10 text-center text-[#5C4B42]/60 text-sm">
-        <p>Secure authentication with end-to-end encryption</p>
+        <p>{t('secure_auth_message')}</p>
         <div className="flex justify-center gap-4 mt-4">
           <span className="text-xs bg-[#E6E4D8] px-2 py-1 rounded">
-            🔒 SSL Secured
+            🔒 {t('ssl_secured')}
           </span>
           <span className="text-xs bg-[#E6E4D8] px-2 py-1 rounded">
-            🛡️ Privacy Protected
+            🛡️ {t('privacy_protected')}
           </span>
         </div>
       </div>

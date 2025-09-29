@@ -5,9 +5,11 @@ import React, {
   useMemo,
   useEffect,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { assets } from '../assets/assets.js';
 import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext.jsx';
+import { useLanguage } from '../context/LanguageContext'; // Add this import
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import axios from 'axios';
@@ -29,6 +31,8 @@ const Navbar = () => {
     currency,
     backendURL,
   } = useContext(ShopContext);
+  const { t } = useTranslation();
+  const { currentLanguage, changeLanguage } = useLanguage(); // Add this
 
   // Reset flyouts on token change and mobile menu open
   useEffect(() => {
@@ -95,7 +99,7 @@ const Navbar = () => {
                 setAccountFlyoutOpen(false);
               }}
             >
-              My Profile
+              {t('profile')}
             </p>
             <p
               className="cursor-pointer hover:text-black"
@@ -104,15 +108,15 @@ const Navbar = () => {
                 setAccountFlyoutOpen(false);
               }}
             >
-              Orders
+              {t('orders')}
             </p>
             <p className="cursor-pointer hover:text-black" onClick={logout}>
-              Logout
+              {t('logout')}
             </p>
           </div>
         </div>
       ),
-    [navigate, logout]
+    [navigate, logout, t]
   );
 
   // Cart flyout content
@@ -136,7 +140,9 @@ const Navbar = () => {
       <div className="bg-[#E6E4D8] border rounded-xl w-72">
         <div className="flex flex-col gap-4 p-4">
           {cartItemsArray.length === 0 ? (
-            <p className="text-center text-[#3A3A3A]">Your cart is empty</p>
+            <p className="text-center text-[#3A3A3A]">
+              {t('your_cart_is_empty')}
+            </p>
           ) : (
             <>
               <div className="max-h-60 overflow-y-auto pr-2">
@@ -167,7 +173,7 @@ const Navbar = () => {
                 ))}
               </div>
               <div className="flex justify-between font-medium text-[#3A3A3A]">
-                <span>Subtotal</span>
+                <span>{t('subtotal')}</span>
                 <span>
                   {currency}
                   {getCartTotal().toFixed(2)}
@@ -180,14 +186,14 @@ const Navbar = () => {
                   setCartFlyoutOpen(false);
                 }}
               >
-                View Cart
+                {t('view_cart')}
               </button>
             </>
           )}
         </div>
       </div>
     );
-  }, [cartItems, products, currency, getCartTotal, navigate]);
+  }, [cartItems, products, currency, getCartTotal, navigate, t]);
 
   return (
     <div className="fixed top-0 left-0 w-full shadow-md flex items-center justify-between ps-4 sm:ps-[5vw] pe-4 sm:pe-[5vw] ms-auto py-2 font-medium bg-[#E6E4D8] z-50">
@@ -197,19 +203,19 @@ const Navbar = () => {
 
       <ul className="hidden sm:flex gap-5 text-sm text-[#5c4b42] tinos-bold text-[16px] -translate-x-10">
         <NavLink to="/" className="flex flex-col items-center">
-          <p>Home</p>
+          <p>{t('home')}</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>
         <NavLink to="/collection" className="flex flex-col items-center">
-          <p>Collection</p>
+          <p>{t('collection')}</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>
         <NavLink to="/about" className="flex flex-col items-center">
-          <p>About</p>
+          <p>{t('about')}</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>
         <NavLink to="/contact" className="flex flex-col items-center">
-          <p>Contact</p>
+          <p>{t('contact')}</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-[#C4A484] hidden" />
         </NavLink>
       </ul>
@@ -288,6 +294,51 @@ const Navbar = () => {
           </AnimatePresence>
         </div>
 
+        {/* Language Switcher */}
+        <div className="relative group">
+          <button className="flex items-center text-[#3A3A3A]">
+            <span className="text-sm mr-1">
+              {(currentLanguage || 'en').toUpperCase()}
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+          <div className="absolute right-0 mt-2 w-16 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+            <div className="py-1">
+              <button
+                onClick={() => changeLanguage('en')}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage('fr')}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                FR
+              </button>
+              <button
+                onClick={() => changeLanguage('de')}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                DE
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Mobile menu button */}
         <img
           onClick={() => setVisible(true)}
@@ -329,15 +380,15 @@ const Navbar = () => {
                   alt=""
                   aria-hidden="true"
                 />
-                <span className="font-medium">Menu</span>
+                <span className="font-medium">{t('menu')}</span>
               </button>
 
               <nav className="flex flex-col mt-2">
                 {[
-                  { path: '/', label: 'Home' },
-                  { path: '/collection', label: 'Collection' },
-                  { path: '/about', label: 'About' },
-                  { path: '/contact', label: 'Contact' },
+                  { path: '/', label: t('home') },
+                  { path: '/collection', label: t('collection') },
+                  { path: '/about', label: t('about') },
+                  { path: '/contact', label: t('contact') },
                 ].map((link) => (
                   <NavLink
                     key={link.path}
@@ -364,14 +415,14 @@ const Navbar = () => {
                       className="block py-2 text-center text-[#D6A7A0] hover:text-[#C79790]/50 transition-colors"
                       onClick={() => setVisible(false)}
                     >
-                      My Profile
+                      {t('profile')}
                     </NavLink>
                     <NavLink
                       to="/orders"
                       className="block py-2 text-center text-[#D6A7A0] hover:text-[#C79790]/50 transition-colors"
                       onClick={() => setVisible(false)}
                     >
-                      My Orders
+                      {t('orders')}
                     </NavLink>
                     <button
                       className="block py-2 text-center text-[#D6A7A0] hover:text-[#C79790]/50 transition-colors w-full"
@@ -380,7 +431,7 @@ const Navbar = () => {
                         setVisible(false);
                       }}
                     >
-                      Logout
+                      {t('logout')}
                     </button>
                   </>
                 ) : (
@@ -389,7 +440,7 @@ const Navbar = () => {
                     className="block py-2 text-center text-[#D6A7A0] hover:text-[#C79790]/50 transition-colors"
                     onClick={() => setVisible(false)}
                   >
-                    Login
+                    {t('login')}
                   </NavLink>
                 )}
               </div>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const NewsletterVerification = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('verifying');
   const backendURL =
@@ -25,7 +27,7 @@ const NewsletterVerification = () => {
 
         if (response.data.success) {
           setStatus('success');
-          toast.success('Email verified successfully!');
+          toast.success(t('email_verified_success'));
         } else {
           setStatus('invalid');
           toast.warning(response.data.message);
@@ -33,12 +35,12 @@ const NewsletterVerification = () => {
       } catch (error) {
         console.log(error.message);
         setStatus('error');
-        toast.error('Verification failed. Please try again.');
+        toast.error(t('verification_failed'));
       }
     };
 
     verifyToken();
-  }, [token, backendURL]);
+  }, [token, backendURL, t]);
 
   const renderContent = () => {
     switch (status) {
@@ -46,7 +48,7 @@ const NewsletterVerification = () => {
         return (
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D6A7A0] mx-auto mb-4"></div>
-            <p>Verifying your email...</p>
+            <p>{t('verifying_email')}</p>
           </div>
         );
       case 'success':
@@ -67,12 +69,9 @@ const NewsletterVerification = () => {
               ></path>
             </svg>
             <h2 className="text-2xl font-bold text-[#5C4B42] mb-2">
-              Verification Successful!
+              {t('verification_success_title')}
             </h2>
-            <p>
-              Your email has been verified. You'll now receive our latest offers
-              and updates.
-            </p>
+            <p>{t('verification_success_message')}</p>
           </div>
         );
       case 'invalid':
@@ -93,12 +92,9 @@ const NewsletterVerification = () => {
               ></path>
             </svg>
             <h2 className="text-2xl font-bold text-[#5C4B42] mb-2">
-              Invalid Verification Link
+              {t('invalid_link_title')}
             </h2>
-            <p>
-              The verification link is invalid or has expired. Please try
-              subscribing again.
-            </p>
+            <p>{t('invalid_link_message')}</p>
           </div>
         );
       case 'error':
@@ -120,9 +116,9 @@ const NewsletterVerification = () => {
               ></path>
             </svg>
             <h2 className="text-2xl font-bold text-[#5C4B42] mb-2">
-              Verification Error
+              {t('verification_error_title')}
             </h2>
-            <p>Something went wrong. Please try again later.</p>
+            <p>{t('verification_error_message')}</p>
           </div>
         );
     }

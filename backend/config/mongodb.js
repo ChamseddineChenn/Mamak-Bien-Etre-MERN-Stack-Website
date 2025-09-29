@@ -1,36 +1,56 @@
 import mongoose from 'mongoose';
 
+// Global variable to track connection status
+let isConnected = false;
+let connectionAttempts = 0;
+const MAX_RETRIES = 5;
+
 const connectDB = async () => {
+  if (isConnected) return;
+
   const connectionOptions = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    serverSelectionTimeoutMS: 30000, // 30 seconds
+    socketTimeoutMS: 45000, // 45 seconds
+    maxPoolSize: 10,
   };
 
   try {
-    await mongoose.connect(
-      `${process.env.MONGODB_URI}/MamakBE_Ecommerce_Website`
-    );
+    console.log('Attempting MongoDB connection...');
+    await mongoose.connect(process.env.MONGODB_URL, connectionOptions);
+    isConnected = true;
+    connectionAttempts = 0;
+    console.log('MongoDB connected successfully');
+
+    // Event listeners
     mongoose.connection.on('connected', () => {
       console.log('MongoDB connected');
+      isConnected = true;
     });
 
     mongoose.connection.on('disconnected', () => {
       console.log('MongoDB disconnected. Attempting to reconnect...');
-      setTimeout(() => connectDB(), 5000); // Retry after 5 seconds
+      isConnected = false;
+      setTimeout(connectDB, 5000);
     });
 
     mongoose.connection.on('error', (err) => {
       console.error(`MongoDB connection error: ${err.message}`);
-    });
-
-    mongoose.connection.on('reconnectFailed', () => {
-      console.error('MongoDB reconnection failed. Restarting process...');
-      process.exit(1); // Force restart via process manager
+      isConnected = false;
     });
   } catch (err) {
-    console.error('MongoDB Connection Error:', err);
+    connectionAttempts++;
+    console.error(
+      `Connection attempt ${connectionAttempts} failed:`,
+      err.message
+    );
+
+    if (connectionAttempts < MAX_RETRIES) {
+      console.log(`Retrying in 5 seconds...`);
+      setTimeout(connectDB, 5000);
+    } else {
+      console.error('Maximum connection attempts reached. Exiting...');
+      process.exit(1);
+    }
   }
 };
 

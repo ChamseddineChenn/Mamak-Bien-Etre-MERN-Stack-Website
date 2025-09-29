@@ -3,11 +3,23 @@ import { ShopContext } from '../context/ShopContext';
 import CartTotal from '../components/CartTotal';
 import Title from '../components/Title';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const PlaceOrder = () => {
+  const { t } = useTranslation();
   const [paymentMethod, setPaymentMethod] = useState('cod');
-  const { navigate, cartItems, createOrder, userDeliveryAddress, token } =
-    useContext(ShopContext);
+  const {
+    navigate,
+    cartItems,
+    createOrder,
+    userDeliveryAddress,
+    backendURL,
+    token,
+    user,
+    sessionId,
+    getCartTotal,
+  } = useContext(ShopContext);
 
   const [formData, setFormData] = useState({
     recipientName: '',
@@ -25,7 +37,6 @@ const PlaceOrder = () => {
 
   // Pre-fill form with saved address if available
   useEffect(() => {
-    // Check if user data is available
     if (userDeliveryAddress || !token) {
       if (userDeliveryAddress) {
         setFormData({
@@ -41,6 +52,14 @@ const PlaceOrder = () => {
       setIsLoading(false);
     }
   }, [userDeliveryAddress, token]);
+
+  // Disable COD for non-Tunisian addresses
+  useEffect(() => {
+    if (formData.country !== 'Tunisia' && paymentMethod === 'cod') {
+      setPaymentMethod('card');
+      toast.info(t('cod_only_tunisia'));
+    }
+  }, [formData.country, paymentMethod, t]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,7 +82,7 @@ const PlaceOrder = () => {
 
     requiredFields.forEach((field) => {
       if (!formData[field] || formData[field].trim() === '') {
-        newErrors[field] = 'This field is required';
+        newErrors[field] = t('field_required');
       }
     });
 
@@ -71,39 +90,83 @@ const PlaceOrder = () => {
       formData.phoneNumber &&
       !/^\+?\d{7,15}$/.test(formData.phoneNumber.replace(/[^\d+]/g, ''))
     ) {
-      newErrors.phoneNumber = 'Invalid phone number format';
+      newErrors.phoneNumber = t('invalid_phone_format');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const calculateTotal = () => {
+    return getCartTotal() + 10; // Cart total + delivery fee
+  };
+
+  const handleCardPayment = async () => {
+    try {
+      setIsSubmitting(true);
+
+      // Prepare order data without creating it in DB
+      const orderData = {
+        userId: user?._id,
+        sessionId: sessionId,
+        address: formData,
+        items: Object.values(cartItems).map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          priceAtOrder: item.price,
+          name: item.name,
+        })),
+        totalAmount: calculateTotal(),
+        deliveryFee: 10,
+        paymentMethod: paymentMethod,
+        userEmail: user?.email,
+      };
+
+      // Initiate payment with Konnect
+      const response = await axios.post(
+        `${backendURL}/api/payment/konnect/initiate`,
+        { orderData },
+        { headers: { token } }
+      );
+
+      if (response.data.success && response.data.paymentUrl) {
+        // Redirect to payment gateway
+        window.location.href = response.data.paymentUrl;
+      } else {
+        throw new Error(t('payment_initiation_failed'));
+      }
+    } catch (error) {
+      console.error('Card payment error:', error);
+      toast.error(
+        `${t('payment_failed')}: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (Object.keys(cartItems).length === 0) {
-      toast.error('Your cart is empty!');
-      return;
-    }
-
     if (!validateForm()) return;
 
-    setIsSubmitting(true);
-
-    try {
-      const order = await createOrder({
-        address: formData,
-        paymentMethod,
-      });
-
-      if (order) {
+    if (paymentMethod === 'cod') {
+      // Handle COD normally
+      try {
+        setIsSubmitting(true);
+        const order = await createOrder({
+          address: formData,
+          paymentMethod,
+        });
         navigate(`/order-confirmation/${order._id}`);
+      } catch (error) {
+        toast.error(`${t('order_creation_failed')}: ${error.message}`);
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error('Order creation error:', error);
-      toast.error(`Failed to place order: ${error.message}`);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      // Handle online payment
+      await handleCardPayment();
     }
   };
 
@@ -118,11 +181,12 @@ const PlaceOrder = () => {
         country: userDeliveryAddress.country || 'Tunisia',
         phoneNumber: userDeliveryAddress.phoneNumber || '',
       });
-      toast.info('Saved address loaded');
+      toast.info(t('saved_address_loaded'));
     } else {
-      toast.warning('No saved address found');
+      toast.warning(t('no_saved_address'));
     }
   };
+
   const useNewAddress = () => {
     setFormData({
       recipientName: '',
@@ -133,7 +197,7 @@ const PlaceOrder = () => {
       country: 'Tunisia',
       phoneNumber: '',
     });
-    toast.info('Insert new address!');
+    toast.info(t('insert_new_address'));
   };
 
   if (isLoading) {
@@ -152,7 +216,7 @@ const PlaceOrder = () => {
       {/* Left Side - Address Form */}
       <div className="flex flex-col gap-6 w-full md:max-w-[480px]">
         <div className="mb-4">
-          <Title primaryText={'Order'} secondaryText={'Information'} />
+          <Title primaryText={t('order')} secondaryText={t('information')} />
         </div>
 
         {userDeliveryAddress && (
@@ -178,7 +242,7 @@ const PlaceOrder = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              Use Saved Address
+              {t('use_saved_address')}
             </button>
             <button
               type="button"
@@ -201,14 +265,14 @@ const PlaceOrder = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              Use New Address
+              {t('use_new_address')}
             </button>
           </div>
         )}
 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Recipient Name *
+            {t('recipient_name')} *
           </label>
           <input
             className={`w-full px-4 py-2.5 border rounded-lg ${
@@ -218,7 +282,7 @@ const PlaceOrder = () => {
             } focus:outline-none focus:ring-1 focus:ring-[#A6A58A]`}
             type="text"
             name="recipientName"
-            placeholder="Full Name"
+            placeholder={t('full_name_placeholder')}
             value={formData.recipientName}
             onChange={handleInputChange}
           />
@@ -229,7 +293,7 @@ const PlaceOrder = () => {
 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Street Address *
+            {t('street_address')} *
           </label>
           <input
             className={`w-full px-4 py-2.5 border rounded-lg ${
@@ -239,7 +303,7 @@ const PlaceOrder = () => {
             } focus:outline-none focus:ring-1 focus:ring-[#A6A58A]`}
             type="text"
             name="street"
-            placeholder="Street and building number"
+            placeholder={t('street_placeholder')}
             value={formData.street}
             onChange={handleInputChange}
           />
@@ -251,7 +315,7 @@ const PlaceOrder = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              City *
+              {t('city_label')} *
             </label>
             <input
               className={`w-full px-4 py-2.5 border rounded-lg ${
@@ -261,7 +325,7 @@ const PlaceOrder = () => {
               } focus:outline-none focus:ring-1 focus:ring-[#A6A58A]`}
               type="text"
               name="city"
-              placeholder="City"
+              placeholder={t('city_placeholder')}
               value={formData.city}
               onChange={handleInputChange}
             />
@@ -272,13 +336,13 @@ const PlaceOrder = () => {
 
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              State
+              {t('state_label')}
             </label>
             <input
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A6A58A] focus:border-[#A6A58A]"
               type="text"
               name="state"
-              placeholder="State/Province"
+              placeholder={t('state_placeholder')}
               value={formData.state}
               onChange={handleInputChange}
             />
@@ -288,7 +352,7 @@ const PlaceOrder = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Postal Code *
+              {t('postal_code')} *
             </label>
             <input
               className={`w-full px-4 py-2.5 border rounded-lg ${
@@ -298,7 +362,7 @@ const PlaceOrder = () => {
               } focus:outline-none focus:ring-1 focus:ring-[#A6A58A]`}
               type="text"
               name="zipCode"
-              placeholder="Postal code"
+              placeholder={t('postal_code_placeholder')}
               value={formData.zipCode}
               onChange={handleInputChange}
             />
@@ -309,7 +373,7 @@ const PlaceOrder = () => {
 
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Country
+              {t('country_label')}
             </label>
             <select
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A6A58A] focus:border-[#A6A58A]"
@@ -322,13 +386,14 @@ const PlaceOrder = () => {
               <option value="Libya">Libya</option>
               <option value="Morocco">Morocco</option>
               <option value="Egypt">Egypt</option>
+              <option value="Other">{t('other')}</option>
             </select>
           </div>
         </div>
 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Phone Number *
+            {t('phone_number')} *
           </label>
           <input
             className={`w-full px-4 py-2.5 border rounded-lg ${
@@ -338,7 +403,7 @@ const PlaceOrder = () => {
             } focus:outline-none focus:ring-1 focus:ring-[#A6A58A]`}
             type="tel"
             name="phoneNumber"
-            placeholder="e.g., +21612345678"
+            placeholder={t('phone_placeholder')}
             value={formData.phoneNumber}
             onChange={handleInputChange}
           />
@@ -355,126 +420,26 @@ const PlaceOrder = () => {
         </div>
 
         <div className="mt-8">
-          <Title primaryText={'Payment'} secondaryText={'Method'} />
+          <Title primaryText={t('payment')} secondaryText={t('method')} />
         </div>
 
         <div className="flex flex-col gap-4 text-[#3A3A3A] mt-4">
-          <div className="flex gap-4 flex-col lg:flex-row">
-            <div
-              className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all ${
-                paymentMethod === 'icc'
-                  ? 'border-2 border-[#A6A58A] bg-[#F5F3EB]'
-                  : 'border border-[#E6E4D8] hover:border-[#A6A58A]'
-              }`}
-              onClick={() => setPaymentMethod('icc')}
-            >
-              <div
-                className={`min-w-6 h-6 rounded-full flex items-center justify-center ${
-                  paymentMethod === 'icc'
-                    ? 'bg-[#A6A58A]'
-                    : 'border border-[#A6A58A]'
-                }`}
-              >
-                {paymentMethod === 'icc' && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3 text-white"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-8 text-gray-700"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-                <p className="text-sm">International Credit Card</p>
-              </div>
-            </div>
-
-            <div
-              className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all ${
-                paymentMethod === 'ncc'
-                  ? 'border-2 border-[#A6A58A] bg-[#F5F3EB]'
-                  : 'border border-[#E6E4D8] hover:border-[#A6A58A]'
-              }`}
-              onClick={() => setPaymentMethod('ncc')}
-            >
-              <div
-                className={`min-w-6 h-6 rounded-full flex items-center justify-center ${
-                  paymentMethod === 'ncc'
-                    ? 'bg-[#A6A58A]'
-                    : 'border border-[#A6A58A]'
-                }`}
-              >
-                {paymentMethod === 'ncc' && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3 text-white"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-8 text-gray-700"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-                <p className="text-sm">National Credit Card (Tunisia)</p>
-              </div>
-            </div>
-          </div>
-
           <div
             className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all ${
-              paymentMethod === 'cod'
+              paymentMethod === 'card'
                 ? 'border-2 border-[#A6A58A] bg-[#F5F3EB]'
                 : 'border border-[#E6E4D8] hover:border-[#A6A58A]'
             }`}
-            onClick={() => setPaymentMethod('cod')}
+            onClick={() => setPaymentMethod('card')}
           >
             <div
               className={`min-w-6 h-6 rounded-full flex items-center justify-center ${
-                paymentMethod === 'cod'
+                paymentMethod === 'card'
                   ? 'bg-[#A6A58A]'
                   : 'border border-[#A6A58A]'
               }`}
             >
-              {paymentMethod === 'cod' && (
+              {paymentMethod === 'card' && (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-3 w-3 text-white"
@@ -489,21 +454,95 @@ const PlaceOrder = () => {
                 </svg>
               )}
             </div>
-            <p>Cash On Delivery</p>
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-8 text-gray-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                />
+              </svg>
+              <p className="text-sm">{t('online_payment')}</p>
+            </div>
+          </div>
+
+          <div
+            className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all ${
+              formData.country === 'Tunisia'
+                ? paymentMethod === 'cod'
+                  ? 'border-2 border-[#A6A58A] bg-[#F5F3EB]'
+                  : 'border border-[#E6E4D8] hover:border-[#A6A58A]'
+                : 'opacity-50 cursor-not-allowed border border-gray-200'
+            }`}
+            onClick={() => {
+              if (formData.country === 'Tunisia') {
+                setPaymentMethod('cod');
+              }
+            }}
+          >
+            <div
+              className={`min-w-6 h-6 rounded-full flex items-center justify-center ${
+                formData.country === 'Tunisia'
+                  ? paymentMethod === 'cod'
+                    ? 'bg-[#A6A58A]'
+                    : 'border border-[#A6A58A]'
+                  : 'border border-gray-400'
+              }`}
+            >
+              {paymentMethod === 'cod' && formData.country === 'Tunisia' && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </div>
+            <div>
+              <p>{t('cash_on_delivery')}</p>
+              {formData.country !== 'Tunisia' && (
+                <p className="text-xs text-red-500 mt-1">
+                  {t('cod_only_tunisia')}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="w-full mt-10">
           <button
             type="submit"
-            disabled={isSubmitting || Object.keys(cartItems).length === 0}
+            disabled={
+              isSubmitting ||
+              Object.keys(cartItems).length === 0 ||
+              (paymentMethod === 'cod' && formData.country !== 'Tunisia')
+            }
             className={`w-full py-3 px-6 rounded-lg font-medium text-white transition-colors ${
-              isSubmitting || Object.keys(cartItems).length === 0
+              isSubmitting ||
+              Object.keys(cartItems).length === 0 ||
+              (paymentMethod === 'cod' && formData.country !== 'Tunisia')
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-[#A6A58A] hover:bg-[#8a896d]'
             }`}
           >
-            {isSubmitting ? 'Processing Order...' : 'Place Order'}
+            {isSubmitting
+              ? t('processing_order')
+              : paymentMethod === 'cod'
+              ? t('place_order')
+              : t('proceed_to_payment')}
           </button>
         </div>
       </div>

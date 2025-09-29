@@ -3,8 +3,10 @@ import { ShopContext } from '../context/ShopContext';
 import Title from '../components/Title';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const UserProfile = () => {
+  const { t } = useTranslation();
   const {
     user,
     token,
@@ -78,7 +80,7 @@ const UserProfile = () => {
             }
           }
         } catch (error) {
-          toast.error('Failed to load profile: ' + error.message);
+          toast.error(t('profile_load_error') + error.message);
         } finally {
           setIsLoading(false);
         }
@@ -86,13 +88,13 @@ const UserProfile = () => {
 
       fetchUserProfile();
     }
-  }, [user, token, backendURL, navigate]);
+  }, [user, token, backendURL, navigate, t]);
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
 
     if (!profileForm.fullName.trim()) {
-      setErrors({ fullName: 'Full name is required' });
+      setErrors({ fullName: t('error_fullName_required') });
       return;
     }
 
@@ -100,7 +102,7 @@ const UserProfile = () => {
 
     try {
       await updateUserProfile(profileForm.fullName);
-      toast.success('Profile updated successfully');
+      toast.success(t('profile_updated'));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -122,7 +124,7 @@ const UserProfile = () => {
 
     requiredFields.forEach((field) => {
       if (!addressForm[field] || addressForm[field].trim() === '') {
-        newErrors[field] = 'This field is required';
+        newErrors[field] = t('field_required');
       }
     });
 
@@ -130,7 +132,7 @@ const UserProfile = () => {
       addressForm.phoneNumber &&
       !/^\+?\d{7,15}$/.test(addressForm.phoneNumber.replace(/[^\d+]/g, ''))
     ) {
-      newErrors.phoneNumber = 'Invalid phone number format';
+      newErrors.phoneNumber = t('invalid_phone');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -141,10 +143,10 @@ const UserProfile = () => {
     setIsSaving(true);
     try {
       await updateUserDeliveryAddress(addressForm);
-      toast.success('Address saved successfully');
+      toast.success(t('address_saved'));
       setErrors({});
     } catch (error) {
-      toast.error('Failed to save address: ' + error.message);
+      toast.error(t('address_save_error') + error.message);
     } finally {
       setIsSaving(false);
     }
@@ -155,15 +157,15 @@ const UserProfile = () => {
 
     const newErrors = {};
     if (!passwordForm.currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
+      newErrors.currentPassword = t('error_current_password_required');
     }
     if (!passwordForm.newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = t('error_new_password_required');
     } else if (passwordForm.newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
+      newErrors.newPassword = t('error_password_length');
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = t('error_passwords_mismatch');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -177,7 +179,7 @@ const UserProfile = () => {
         passwordForm.currentPassword,
         passwordForm.newPassword
       );
-      toast.success('Password changed successfully');
+      toast.success(t('password_changed'));
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
@@ -222,7 +224,7 @@ const UserProfile = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 min-h-[100vh] sm:p-6">
       <div className="text-center mb-8">
-        <Title primaryText="Your" secondaryText="Profile" />
+        <Title primaryText={t('your')} secondaryText={t('profile')} />
       </div>
 
       <div className="flex border-b mb-6">
@@ -234,7 +236,7 @@ const UserProfile = () => {
           }`}
           onClick={() => setActiveTab('profile')}
         >
-          Account Details
+          {t('account_details')}
         </button>
         <button
           className={`py-3 px-6 font-medium ${
@@ -244,7 +246,7 @@ const UserProfile = () => {
           }`}
           onClick={() => setActiveTab('shipping')}
         >
-          Shipping Address
+          {t('shipping_address')}
         </button>
         <button
           className={`py-3 px-6 font-medium ${
@@ -254,7 +256,7 @@ const UserProfile = () => {
           }`}
           onClick={() => setActiveTab('password')}
         >
-          Change Password
+          {t('change_password')}
         </button>
       </div>
 
@@ -263,11 +265,13 @@ const UserProfile = () => {
           onSubmit={handleProfileSubmit}
           className="bg-white rounded-lg shadow-md p-6"
         >
-          <h3 className="text-xl font-semibold mb-6">Account Information</h3>
+          <h3 className="text-xl font-semibold mb-6">
+            {t('account_information')}
+          </h3>
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+              {t('full_name_label')}
             </label>
             <input
               className={`w-full px-4 py-2 border rounded-md ${
@@ -287,7 +291,7 @@ const UserProfile = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+              {t('email_address')}
             </label>
             <input
               className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none cursor-not-allowed"
@@ -297,7 +301,7 @@ const UserProfile = () => {
               disabled
             />
             <p className="text-xs text-gray-500 mt-1">
-              Contact support to change your email
+              {t('contact_support_email')}
             </p>
           </div>
 
@@ -309,7 +313,7 @@ const UserProfile = () => {
                 isSaving ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t('saving') : t('save_changes')}
             </button>
           </div>
         </form>
@@ -320,12 +324,14 @@ const UserProfile = () => {
           onSubmit={handleAddressSubmit}
           className="bg-white rounded-lg shadow-md p-6"
         >
-          <h3 className="text-xl font-semibold mb-6">Shipping Information</h3>
+          <h3 className="text-xl font-semibold mb-6">
+            {t('shipping_information')}
+          </h3>
 
           <div className="grid grid-cols-1 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Recipient Name *
+                {t('recipient_name')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -347,7 +353,7 @@ const UserProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Street Address *
+                {t('street_address')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -368,7 +374,7 @@ const UserProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  City *
+                  {t('city_label')}
                 </label>
                 <input
                   className={`w-full px-4 py-2 border rounded-md ${
@@ -388,7 +394,7 @@ const UserProfile = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  State
+                  {t('state_label')}
                 </label>
                 <input
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#A6A58A] focus:border-[#A6A58A]"
@@ -403,7 +409,7 @@ const UserProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Postal Code *
+                  {t('postal_code')}
                 </label>
                 <input
                   className={`w-full px-4 py-2 border rounded-md ${
@@ -423,7 +429,7 @@ const UserProfile = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Country
+                  {t('country_label')}
                 </label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#A6A58A] focus:border-[#A6A58A]"
@@ -448,7 +454,7 @@ const UserProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number *
+                {t('phone_number')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -478,7 +484,7 @@ const UserProfile = () => {
                 isSaving ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
-              {isSaving ? 'Saving...' : 'Save Address'}
+              {isSaving ? t('saving') : t('save_address')}
             </button>
           </div>
         </form>
@@ -489,12 +495,12 @@ const UserProfile = () => {
           onSubmit={handlePasswordSubmit}
           className="bg-white rounded-lg shadow-md p-6"
         >
-          <h3 className="text-xl font-semibold mb-6">Change Password</h3>
+          <h3 className="text-xl font-semibold mb-6">{t('change_password')}</h3>
 
           <div className="grid grid-cols-1 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Current Password *
+                {t('current_password')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -516,7 +522,7 @@ const UserProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password *
+                {t('new_password')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -535,13 +541,13 @@ const UserProfile = () => {
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                Must be at least 8 characters
+                {t('password_length_hint')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm New Password *
+                {t('confirm_new_password')}
               </label>
               <input
                 className={`w-full px-4 py-2 border rounded-md ${
@@ -570,7 +576,7 @@ const UserProfile = () => {
                 isSaving ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
-              {isSaving ? 'Updating...' : 'Change Password'}
+              {isSaving ? t('updating') : t('change_password_button')}
             </button>
           </div>
         </form>

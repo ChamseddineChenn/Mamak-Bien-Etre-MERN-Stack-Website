@@ -2,10 +2,12 @@ import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import Title from './Title';
 import ProductItem from './ProductItem';
+import { useTranslation } from 'react-i18next';
 
 const NewArrivals = () => {
   const { products } = useContext(ShopContext);
   const [NewArrivals, setNewArrivals] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const newProducts = products.filter((item) => item.newArrival);
@@ -15,10 +17,9 @@ const NewArrivals = () => {
   return (
     <div className="my-10">
       <div className="text-center py-8 text-3xl">
-        <Title primaryText={'New'} secondaryText={'Arrivals'} />
+        <Title primaryText={t('new_arrivals')} />
         <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-[#A6A58A]">
-          Discover our newest creations — crafted to elevate your space and
-          soothe your senses
+          {t('new_arrivals_description')}
         </p>
       </div>
 

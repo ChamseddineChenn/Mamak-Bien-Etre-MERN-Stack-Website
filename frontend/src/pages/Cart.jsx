@@ -7,9 +7,11 @@ import { Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, useAnimation } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const EmptyCart = () => {
   const controls = useAnimation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     controls.start({
@@ -28,23 +30,22 @@ const EmptyCart = () => {
       <div className="mb-8 w-40 h-40 justify-center">
         <motion.img
           src={assets.cart_icon}
-          alt="Empty cart"
+          alt={t('empty_cart_alt')}
           initial={{ x: 0, y: 0, rotate: 0 }}
           animate={controls}
         />
       </div>
 
       <h3 className="text-2xl font-bold text-gray-800 mb-3 ml-5">
-        Your Cart Feels Lonely
+        {t('your_cart_feels_lonely')}
       </h3>
       <p className="text-gray-500 mb-6 text-center max-w-md justify-center ml-5">
-        You haven't added anything to your cart yet. Discover our amazing
-        products!
+        {t('discover_products_message')}
       </p>
 
       <Link to="/collection">
         <button className="w-50 min-w-30 mt-3 ml-5 px-8 py-3 bg-[#f2b67b] hover:bg-[#e8a85f] text-[#5c4b42] font-medium rounded-lg transition-colors duration-300">
-          Shop Now
+          {t('shop_now')}
         </button>
       </Link>
     </div>
@@ -60,6 +61,7 @@ const Cart = () => {
     navigate,
     isCartLoading,
   } = useContext(ShopContext);
+  const { t } = useTranslation();
 
   const [cartData, setCartData] = useState([]);
   const [localQuantities, setLocalQuantities] = useState({});
@@ -126,7 +128,7 @@ const Cart = () => {
 
     // Validate against stock before sending
     if (newQty > product.quantity) {
-      toast.warning(`${product.quantity} items available in stock`);
+      toast.warning(t('stock_warning', { quantity: product.quantity }));
       return;
     }
 
@@ -177,7 +179,7 @@ const Cart = () => {
   return (
     <div className="border-t pt-14 min-h-[100vh]">
       <div className="text-2xl mb-3 mt-10 text-center">
-        <Title primaryText={'Shopping'} secondaryText={'Cart'} />
+        <Title primaryText={t('shopping')} secondaryText={t('cart')} />
       </div>
       <div>
         {isCartLoading ? (
@@ -234,7 +236,7 @@ const Cart = () => {
                         <img
                           className="min-w-5 w-5 min-h-5 h-5 -rotate-90"
                           src={assets.arrow_up_icon}
-                          alt="Decrease quantity"
+                          alt={t('decrease_quantity_alt')}
                         />
                       </button>
 
@@ -267,7 +269,7 @@ const Cart = () => {
                         <img
                           className="min-w-5 w-5 min-h-5 h-5 rotate-90"
                           src={assets.arrow_up_icon}
-                          alt="Increase quantity"
+                          alt={t('increase_quantity_alt')}
                         />
                       </button>
                     </div>
@@ -283,7 +285,7 @@ const Cart = () => {
                       <img
                         className="w-4 sm:w-5"
                         src={assets.bin_icon}
-                        alt="Remove item"
+                        alt={t('remove_item_alt')}
                       />
                     </button>
                   </div>
@@ -306,7 +308,7 @@ const Cart = () => {
                 className="mt-5 py-2 px-5 bg-[#f2b67b] hover:bg-[#e8a85f] text-[#5c4b42] font-medium rounded-lg transition-colors duration-300"
                 onClick={() => navigate('/place-order')}
               >
-                Proceed To Checkout
+                {t('proceed_to_checkout')}
               </button>
             </div>
           </div>

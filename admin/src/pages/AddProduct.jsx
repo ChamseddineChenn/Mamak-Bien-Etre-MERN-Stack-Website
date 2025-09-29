@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { assets } from '../assets/assets';
 import axios from 'axios';
-import { backendURL } from '../constants/Exports.js';
+import { backendURL, currency } from '../constants/Exports.js';
 import { toast } from 'react-toastify';
 
 const AddProduct = ({ token }) => {
@@ -216,7 +216,7 @@ const AddProduct = ({ token }) => {
           {/* Product Price */}
           <div className="bg-[#F9F5F2] p-5 rounded-lg">
             <label className="block text-base font-medium text-[#5C4B42] mb-2">
-              Price ($)
+              Price ({currency})
             </label>
             <input
               name="price"

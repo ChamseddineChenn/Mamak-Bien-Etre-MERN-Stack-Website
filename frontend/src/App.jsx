@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import './i18n';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Collection from './pages/Collection';
@@ -17,6 +18,7 @@ import UserProfile from './pages/UserProfile';
 import OrderConfirmation from './pages/OrderConfirmation';
 import NewsletterVerification from './pages/NewsletterVerification';
 import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';
+import { LanguageProvider } from './context/LanguageContext';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -36,26 +38,31 @@ const App = () => {
     <div>
       <ScrollToTop />
       <ToastContainer />
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/collection" element={<Collection />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/product/:productId" element={<Product />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/place-order" element={<PlaceOrder />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route
-          path="/order-confirmation/:orderId"
-          element={<OrderConfirmation />}
-        />
-        <Route path="/verify-newsletter" element={<NewsletterVerification />} />
-        <Route path="/unsubscribe" element={<NewsletterUnsubscribe />} />
-      </Routes>
-      <Footer />
+      <LanguageProvider>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/collection" element={<Collection />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/product/:productId" element={<Product />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/place-order" element={<PlaceOrder />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route
+            path="/order-confirmation/:orderId"
+            element={<OrderConfirmation />}
+          />
+          <Route
+            path="/verify-newsletter"
+            element={<NewsletterVerification />}
+          />
+          <Route path="/unsubscribe" element={<NewsletterUnsubscribe />} />
+        </Routes>
+        <Footer />
+      </LanguageProvider>
     </div>
   );
 };

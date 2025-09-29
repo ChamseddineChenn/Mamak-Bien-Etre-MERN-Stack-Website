@@ -3,8 +3,10 @@ import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Orders = () => {
+  const { t } = useTranslation();
   const { currency, getUserOrders, isSessionReady, products } =
     useContext(ShopContext);
   const [orders, setOrders] = useState([]);
@@ -37,36 +39,40 @@ const Orders = () => {
     switch (status) {
       case 'processing':
         return {
-          text: 'Processing',
+          text: t('processing'),
           color: 'text-blue-600',
           dot: 'bg-blue-600',
         };
       case 'awaiting_delivery':
         return {
-          text: 'Awaiting Delivery',
+          text: t('awaiting_delivery'),
           color: 'text-yellow-600',
           dot: 'bg-yellow-600',
         };
       case 'in_delivery':
         return {
-          text: 'In Delivery',
+          text: t('in_delivery'),
           color: 'text-purple-600',
           dot: 'bg-purple-600',
         };
       case 'delivered':
         return {
-          text: 'Delivered',
+          text: t('delivered'),
           color: 'text-green-600',
           dot: 'bg-green-600',
         };
       case 'paused':
         return {
-          text: 'Paused',
+          text: t('paused'),
           color: 'text-orange-600',
           dot: 'bg-orange-600',
         };
       case 'cancelled':
-        return { text: 'Cancelled', color: 'text-red-600', dot: 'bg-red-600' };
+        return {
+          text: t('cancelled'),
+          color: 'text-red-600',
+          dot: 'bg-red-600',
+        };
       default:
         return { text: status, color: 'text-gray-600', dot: 'bg-gray-600' };
     }
@@ -102,24 +108,23 @@ const Orders = () => {
     return (
       <div className="border-t m-10 pt-16 min-h-[100vh]">
         <div className="text-2xl flex justify-center">
-          <Title primaryText={'My'} secondaryText={'Orders'} />
+          <Title primaryText={t('my_plural')} secondaryText={t('orders')} />
         </div>
         <div className="flex flex-col items-center justify-center mt-20">
           <img
             src={assets.no_order_icon}
-            alt="No orders"
+            alt={t('no_orders')}
             className="w-32 h-32 opacity-70 mb-6"
           />
-          <h3 className="text-xl font-semibold mb-2">No Orders Yet</h3>
+          <h3 className="text-xl font-semibold mb-2">{t('no_orders')}</h3>
           <p className="text-gray-600 mb-6 max-w-md text-center">
-            You haven't placed any orders yet. Start shopping to see your orders
-            here!
+            {t('no_orders_message')}
           </p>
           <a
             href="/collection"
             className="px-6 py-3 bg-[#A6A58A] text-white rounded-md hover:bg-[#8A8970] transition-colors"
           >
-            Browse Collection
+            {t('browse_collection')}
           </a>
         </div>
       </div>
@@ -129,7 +134,7 @@ const Orders = () => {
   return (
     <div className="border-t m-10 pt-16 min-h-[100vh]">
       <div className="text-2xl flex justify-center">
-        <Title primaryText={'My'} secondaryText={'Orders'} />
+        <Title primaryText={t('my_plural')} secondaryText={t('orders')} />
       </div>
       <div className="mx-5 md:mx-15 lg:mx-25">
         {orders.map((order) => (
@@ -141,10 +146,10 @@ const Orders = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-[#E8D9CC]">
               <div>
                 <h3 className="font-bold text-lg">
-                  Order #{order._id.slice(-8).toUpperCase()}
+                  {t('order_number', { id: order._id.slice(-8).toUpperCase() })}
                 </h3>
                 <p className="text-gray-600">
-                  Placed on: {formatDate(order.createdAt)}
+                  {t('placed_on', { date: formatDate(order.createdAt) })}
                 </p>
               </div>
               <div className="mt-2 md:mt-0">
@@ -163,7 +168,10 @@ const Orders = () => {
                   </p>
                 </div>
                 <p className="font-bold text-right mt-1">
-                  Total: {currency} {order.totalAmount.toFixed(2)}
+                  {t('order_total', {
+                    currency: currency,
+                    amount: order.totalAmount.toFixed(2),
+                  })}
                 </p>
               </div>
             </div>
@@ -193,7 +201,9 @@ const Orders = () => {
                             <p className="text-lg">
                               {currency} {item.priceAtOrder.toFixed(2)}
                             </p>
-                            <p>Quantity: {item.quantity}</p>
+                            <p>
+                              {t('quantity')}: {item.quantity}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -210,17 +220,20 @@ const Orders = () => {
             {/* Order Footer */}
             <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#E8D9CC]">
               <p className="text-sm text-gray-600">
-                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                {t('items_count', {
+                  count: order.items.length,
+                  s: order.items.length !== 1 ? 's' : '',
+                })}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => navigate(`/order-confirmation/${order._id}`)}
                   className="py-2 px-5 bg-[#A6A584]/90 hover:bg-[#bbba96] text-[#3A3A3A] font-medium rounded-lg transition-colors duration-300"
                 >
-                  View Details
+                  {t('view_details')}
                 </button>
                 <button className="py-2 px-5 bg-[#A6A584]/90 hover:bg-[#bbba96] text-[#3A3A3A] font-medium rounded-lg transition-colors duration-300">
-                  Track Order
+                  {t('track_order')}
                 </button>
               </div>
             </div>

@@ -43,6 +43,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         'processing',
+        'awaiting_payment',
         'awaiting_delivery',
         'in_delivery',
         'paused',
@@ -50,6 +51,11 @@ const orderSchema = new mongoose.Schema(
         'delivered',
       ],
       default: 'processing',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'canceled'],
+      default: 'pending',
     },
     totalAmount: {
       type: Number,
@@ -62,14 +68,27 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ['cod', 'icc', 'ncc'],
+      enum: ['cod', 'card'],
       default: 'cod',
+    },
+    paymentRef: {
+      type: String,
+      default: null,
+    },
+    paymentDetails: {
+      type: {
+        method: String,
+        transactionId: String,
+        amount: Number,
+        currency: String,
+        timestamp: Date,
+      },
+      default: null,
     },
     shortId: {
       type: String,
       unique: true,
       default: function () {
-        // Fixed ObjectId generation
         return new mongoose.Types.ObjectId()
           .toString()
           .slice(18, 24)

@@ -5,21 +5,24 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const ProductBreadcrumbs = ({ product }) => {
+  const { t } = useTranslation();
+
   return (
     <nav aria-label="Breadcrumb" className="p-1">
       <ol className="flex items-center gap-2 text-sm text-[#5C4B42]">
         {/* Home */}
         <li>
           <Link to="/" className="hover:underline">
-            Home
+            {t('home')}
           </Link>
         </li>
         <li className="text-[#D6A7A0]">/</li>
         <li>
           <Link to="/collection" className="hover:underline">
-            Collection
+            {t('collection')}
           </Link>
         </li>
         {/* Category */}
@@ -43,6 +46,7 @@ const ProductBreadcrumbs = ({ product }) => {
 };
 
 const Product = () => {
+  const { t } = useTranslation();
   const { productId } = useParams();
   const {
     products,
@@ -91,7 +95,7 @@ const Product = () => {
         console.log(error.message);
       }
     } else {
-      toast.warning('This item is out of stock');
+      toast.warning(t('out_of_stock'));
     }
   };
 
@@ -109,7 +113,7 @@ const Product = () => {
   // Adding review for the product
   const handleAddReview = async () => {
     if (!reviewRating || !reviewText.trim()) {
-      toast.warning('Please provide both rating and review text');
+      toast.warning(t('error_review_required'));
       return;
     }
 
@@ -122,18 +126,18 @@ const Product = () => {
       );
 
       if (result.success) {
-        toast.success('Review submitted successfully!');
+        toast.success(t('review_submitted'));
         setProductData(result.product);
         setReviewRating(0);
         setReviewText('');
         setActiveTab('reviews');
         setHasReviewed(true);
       } else {
-        toast.error(result.message || 'Failed to submit review');
+        toast.error(result.message || t('review_submission_failed'));
       }
     } catch (error) {
       console.log(error.message);
-      toast.error('Failed to submit review');
+      toast.error(t('review_submission_failed'));
     } finally {
       setIsLoadingReview(false);
     }
@@ -231,7 +235,7 @@ const Product = () => {
                 })}
               </div>
               <span className="text-sm text-gray-600">
-                ({reviewCount} reviews)
+                ({reviewCount} {t('reviews')})
               </span>
             </div>
 
@@ -257,8 +261,8 @@ const Product = () => {
                 }`}
               >
                 {availableStock > 0
-                  ? `${availableStock} in stock`
-                  : 'Out of stock'}
+                  ? t('in_stock', { count: availableStock })
+                  : t('out_of_stock')}
               </span>
             </div>
 
@@ -272,7 +276,7 @@ const Product = () => {
               onClick={handleAddToCart}
               disabled={availableStock === 0}
             >
-              {availableStock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              {availableStock > 0 ? t('add_to_cart') : t('out_of_stock')}
             </button>
 
             {/* Divider */}
@@ -281,9 +285,9 @@ const Product = () => {
             {/* Features */}
             <div className="space-y-4">
               {[
-                { icon: assets.natural_icon, text: '100% Original & Natural' },
-                { icon: assets.cash_icon, text: 'Cash on delivery available' },
-                { icon: assets.cashback_icon, text: '7-day return policy' },
+                { icon: assets.natural_icon, text: t('original_natural') },
+                { icon: assets.cash_icon, text: t('cash_delivery') },
+                { icon: assets.cashback_icon, text: t('return_policy') },
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="bg-[#F5F0EB] p-2 rounded-full">
@@ -308,7 +312,7 @@ const Product = () => {
             }`}
             onClick={() => setActiveTab('description')}
           >
-            Technical Description
+            {t('technical_description')}
           </button>
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors ${
@@ -318,7 +322,7 @@ const Product = () => {
             }`}
             onClick={() => setActiveTab('reviews')}
           >
-            Reviews ({reviewCount})
+            {t('reviews')} ({reviewCount})
           </button>
         </div>
 
@@ -329,7 +333,7 @@ const Product = () => {
               {productData.technicalDescription && (
                 <>
                   <h3 className="font-semibold mt-6">
-                    Technical Specifications
+                    {t('technical_specifications')}
                   </h3>
                   <p>{productData.technicalDescription}</p>
                 </>
@@ -340,10 +344,10 @@ const Product = () => {
               {user && isEligible && !hasReviewed && (
                 <div className="bg-white p-4 rounded-lg border border-[#E8D9CC]">
                   <h3 className="font-medium text-[#5C4B42] mb-3">
-                    Write a Review
+                    {t('write_review')}
                   </h3>
                   <div className="flex items-center mb-3">
-                    <span className="mr-2 text-[#5C4B42]">Rating:</span>
+                    <span className="mr-2 text-[#5C4B42]">{t('rating')}:</span>
                     {[...Array(5)].map((_, i) => (
                       <button
                         key={i}
@@ -367,14 +371,16 @@ const Product = () => {
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     className="w-full min-h-[100px] p-3 border border-[#E8D9CC] rounded-lg mb-3"
-                    placeholder="Share your experience with this product..."
+                    placeholder={t('share_experience')}
                   />
                   <button
                     onClick={handleAddReview}
                     disabled={isLoadingReview}
                     className="px-4 py-2 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] disabled:opacity-50"
                   >
-                    {isLoadingReview ? 'Submitting...' : 'Submit Review'}
+                    {isLoadingReview
+                      ? t('submitting_review')
+                      : t('submit_review')}
                   </button>
                 </div>
               )}
@@ -413,7 +419,7 @@ const Product = () => {
                 ))
               ) : (
                 <p className="text-gray-500 text-center py-4">
-                  No reviews yet. Be the first to review!
+                  {t('no_reviews')}
                 </p>
               )}
             </div>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const NewsletterBox = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
   const backendURL =
     import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
@@ -39,7 +41,7 @@ const NewsletterBox = () => {
   return (
     <div className="text-center py-10 bg-[#F9F5F2]">
       <p className="text-2xl font-medium text text-[#5c4b42]">
-        Want to stay updated on our latest offers? Sign up to our Newsletter!
+        {t('newsletter_title')}
       </p>
       <form
         className="w-[90%] sm:w-2/3 md:w-1/2 flex items-center gap-3 mx-auto my-6 border rounded-lg pl-3 bg-white"
@@ -48,7 +50,7 @@ const NewsletterBox = () => {
         <input
           className="w-full sm:flex-1 outline-none py-3"
           type="email"
-          placeholder="Enter Your Email"
+          placeholder={t('newsletter_placeholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -58,12 +60,10 @@ const NewsletterBox = () => {
           type="submit"
           disabled={isLoading}
         >
-          {isLoading ? 'Sending...' : 'Notify Me!'}
+          {isLoading ? t('sending') : t('notify_me')}
         </button>
       </form>
-      <p className="text-sm text-gray-600">
-        We respect your privacy. Unsubscribe at any time.
-      </p>
+      <p className="text-sm text-gray-600">{t('privacy_notice')}</p>
     </div>
   );
 };

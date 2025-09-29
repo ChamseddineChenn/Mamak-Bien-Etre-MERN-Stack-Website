@@ -6,6 +6,25 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+
+// Helper function to map category names to translation keys
+const getCategoryTranslationKey = (categoryName) => {
+  const translationMap = {
+    'Home Fragrance': 'home_fragrance',
+    'Classic Candles': 'classic_candles',
+    'Fondant Candles': 'fondant_candles',
+    Diffusers: 'diffusers',
+    Scents: 'scents',
+    'Packs & Sets': 'packs_sets',
+    'Complete Collection': 'complete_collection',
+  };
+
+  return (
+    translationMap[categoryName] ||
+    categoryName.toLowerCase().replace(/\s+/g, '_')
+  );
+};
 
 const Breadcrumbs = ({
   category,
@@ -13,12 +32,14 @@ const Breadcrumbs = ({
   setCategory,
   setSubCategory,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <nav aria-label="Breadcrumb" className="py-2 px-6">
       <ol className="flex items-center gap-2 text-sm text-[#5C4B42]">
         <li>
           <div className="hover:underline">
-            <Link to="/">Home</Link>
+            <Link to="/">{t('home')}</Link>
           </div>
         </li>
         {/* Collection (always clickable) */}
@@ -31,7 +52,7 @@ const Breadcrumbs = ({
             }}
             className="hover:underline cursor-pointer"
           >
-            Collection
+            {t('collection')}
           </button>
         </li>
 
@@ -45,10 +66,12 @@ const Breadcrumbs = ({
                   onClick={() => setSubCategory('')}
                   className="hover:underline cursor-pointer"
                 >
-                  {category}
+                  {t(getCategoryTranslationKey(category))}
                 </button>
               ) : (
-                <span className="font-medium">{category}</span>
+                <span className="font-medium">
+                  {t(getCategoryTranslationKey(category))}
+                </span>
               )}
             </li>
           </>
@@ -58,7 +81,9 @@ const Breadcrumbs = ({
         {subCategory && (
           <>
             <li className="text-[#D6A7A0]">/</li>
-            <li className="font-medium">{subCategory}</li>
+            <li className="font-medium">
+              {t(getCategoryTranslationKey(subCategory))}
+            </li>
           </>
         )}
       </ol>
@@ -72,9 +97,10 @@ const Collection = () => {
   const [filterProducts, setFilterProducts] = useState([]);
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
-  const [sortType, setSortType] = useState('relavent');
+  const [sortType, setSortType] = useState('relevant');
   const [collectionName, setCollectionName] = useState('');
   const location = useLocation();
+  const { t } = useTranslation();
 
   //Filters
   const [minPrice, setMinPrice] = useState('');
@@ -111,13 +137,13 @@ const Collection = () => {
     } else if (category !== '') {
       setCollectionName(category);
     } else {
-      setCollectionName('Complete');
+      setCollectionName('Complete Collection');
     }
   };
 
   const displayProductsCount = () => {
     let numberOfItems = filterProducts.length;
-    return numberOfItems;
+    return `${numberOfItems} ${t('products_found')}`;
   };
 
   const applyFilter = () => {
@@ -259,6 +285,8 @@ const Collection = () => {
   }
 
   const HomeFragranceContent = () => {
+    const { t } = useTranslation();
+
     return (
       <div className="border rounded-2xl bg-[#E6E4D8] h-80 md:h-52 w-[35vw] p-6 shadow-xl">
         <div className="flex flex-col py-1">
@@ -269,7 +297,7 @@ const Collection = () => {
               displayChosenSubCategory('Home Fragrance', 'Classic Candles');
             }}
           >
-            Classic Candles
+            {t('classic_candles')}
           </a>
           <a
             href="#"
@@ -278,7 +306,7 @@ const Collection = () => {
               displayChosenSubCategory('Home Fragrance', 'Fondant Candles');
             }}
           >
-            Fondant Candles
+            {t('fondant_candles')}
           </a>
           <a
             href="#"
@@ -287,7 +315,7 @@ const Collection = () => {
               displayChosenSubCategory('Home Fragrance', 'Diffusers');
             }}
           >
-            Diffusers
+            {t('diffusers')}
           </a>
         </div>
 
@@ -299,80 +327,8 @@ const Collection = () => {
             href="#"
             className="block w-full px-4 py-3 text-sm text-font font-medium text-center text-[#3A3A3A] hover:bg-[#D6A7A0]/40 transition-colors"
           >
-            View All Home Fragrance →
+            {t('view_all')} {t('home_fragrance')} →
           </button>
-        </div>
-      </div>
-    );
-  };
-  const PerfumesAndScentsContent = () => {
-    return (
-      <div className="border rounded-2xl bg-[#E6E4D8] h-52 w-[35vw] p-6 shadow-xl">
-        <div className="flex flex-col py-1">
-          <a
-            href="#"
-            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Candles
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Diffusers
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Room Sprays
-          </a>
-        </div>
-
-        {/* View All Button */}
-        <div className="rounded-sm bg-[#D6A7A0]/70">
-          <a
-            href="#"
-            className="block px-4 py-3 text-sm text-font font-medium text-center text-[#3A3A3A] hover:bg-[#D6A7A0]/40 transition-colors"
-          >
-            View All Home Fragrance →
-          </a>
-        </div>
-      </div>
-    );
-  };
-  const PacksAndSetsContent = () => {
-    return (
-      <div className="border rounded-2xl bg-[#E6E4D8] h-52 w-[35vw] p-6 shadow-xl">
-        <div className="flex flex-col py-1">
-          <a
-            href="#"
-            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Candles
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Diffusers
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-          >
-            Room Sprays
-          </a>
-        </div>
-
-        {/* View All Button */}
-        <div className="rounded-sm bg-[#D6A7A0]/70">
-          <a
-            href="#"
-            className="block px-4 py-3 text-sm text-font font-medium text-center text-[#3A3A3A] hover:bg-[#D6A7A0]/40 transition-colors"
-          >
-            View All Home Fragrance →
-          </a>
         </div>
       </div>
     );
@@ -384,17 +340,24 @@ const Collection = () => {
         <div className="flex gap-5 md:gap-20 justify-center md:w-full ps-5 pe-5">
           <FlyoutLink href="#" FlyoutContent={HomeFragranceContent}>
             <p onClick={() => displayChosenCategory('Home Fragrance')}>
-              Home Fragrance
+              {t('home_fragrance')}
             </p>
           </FlyoutLink>
-          <FlyoutLink href="#">
-            <p onClick={() => displayChosenCategory('Scents')}>Scents</p>
-          </FlyoutLink>
-          <FlyoutLink href="#">
-            <p onClick={() => displayChosenCategory('Packs & Sets')}>
-              Packs & Sets
-            </p>
-          </FlyoutLink>
+          {/* Simple links without dropdown for Scents and Packs & Sets */}
+          <div className="relative h-fit w-fit">
+            <a className="relative text-[#3A3A3A]" href="#">
+              <p onClick={() => displayChosenCategory('Scents')}>
+                {t('scents')}
+              </p>
+            </a>
+          </div>
+          <div className="relative h-fit w-fit">
+            <a className="relative text-[#3A3A3A]" href="#">
+              <p onClick={() => displayChosenCategory('Packs & Sets')}>
+                {t('packs_sets')}
+              </p>
+            </a>
+          </div>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row mt-5 sm:mt-0 ">
@@ -404,7 +367,7 @@ const Collection = () => {
             className="py-2 justify-center text-l md:text-xl flex items-center cursor-pointer gap-10"
             onClick={() => setShowFilter(!showFilter)}
           >
-            Filters
+            {t('filters')}
             <img
               className={'min-w-7 w-7 sm:hidden'}
               src={assets.menu_icon}
@@ -416,10 +379,10 @@ const Collection = () => {
               showFilter ? '' : 'hidden'
             } sm:block`}
           >
-            <p className="mb-3 text-sm font-medium">Price</p>
+            <p className="mb-3 text-sm font-medium">{t('price')}</p>
             <div className="flex flex-col gap-2 text-sm font-light text-[#3A3A3A]">
               <div className="flex gap-2 items-center">
-                <label className="w-24">Maximum:</label>
+                <label className="w-24">{t('maximum')}:</label>
                 <input
                   className="bg-gray-100 rounded ml-2 p-1 w-full"
                   type="number"
@@ -429,7 +392,7 @@ const Collection = () => {
                 />
               </div>
               <div className="flex gap-2 items-center">
-                <label className="w-24">Minimum:</label>
+                <label className="w-24">{t('minimum')}:</label>
                 <input
                   className="bg-gray-100 rounded ml-2 p-1 w-full"
                   type="number"
@@ -445,7 +408,7 @@ const Collection = () => {
               showFilter ? '' : 'hidden'
             } sm:block`}
           >
-            <p className="mb-3 text-sm font-medium">Featured</p>
+            <p className="mb-3 text-sm font-medium">{t('featured')}</p>
             <div className="flex flex-col gap-2 text-sm font-light text-[#3A3A3A]">
               <div className="flex gap-2 items-center">
                 <input
@@ -455,7 +418,7 @@ const Collection = () => {
                   onChange={(e) => setShowOnSale(e.target.checked)}
                   id="onSaleCheckbox"
                 />
-                <label htmlFor="onSaleCheckbox">On Sale</label>
+                <label htmlFor="onSaleCheckbox">{t('on_sale')}</label>
               </div>
               <div className="flex gap-2 items-center">
                 <input
@@ -465,7 +428,7 @@ const Collection = () => {
                   onChange={(e) => setShowNew(e.target.checked)}
                   id="newCheckbox"
                 />
-                <label htmlFor="newCheckbox">New</label>
+                <label htmlFor="newCheckbox">{t('new')}</label>
               </div>
               <div className="flex gap-2 items-center">
                 <input
@@ -475,7 +438,7 @@ const Collection = () => {
                   onChange={(e) => setShowBestSeller(e.target.checked)}
                   id="bestSellerCheckbox"
                 />
-                <label htmlFor="bestSellerCheckbox">Best Seller</label>
+                <label htmlFor="bestSellerCheckbox">{t('best_seller')}</label>
               </div>
             </div>
           </div>
@@ -492,14 +455,16 @@ const Collection = () => {
                 setShowBestSeller(false);
               }}
             >
-              Reset Filters
+              {t('reset_filters')}
             </button>
           </div>
         </div>
         <div className="flex-1 min-w-[65vw] min-h-[100vh] md:min-w-[74vw] m-2 md:m-5 p-2">
           <div className="flex justify-center text-3xl">
-            <Title primaryText={collectionName} secondaryText={'Collection'} />
-            {/* Products Section */}
+            <Title
+              primaryText={t(getCategoryTranslationKey(collectionName))}
+              secondaryText={t('collection')}
+            />
           </div>
           <Breadcrumbs
             category={category}
@@ -518,13 +483,13 @@ const Collection = () => {
               <input
                 className="m-2 p-2  border border-none focus:outline-none rounded-2xl bg-gray-100 w-full sm:w-[20vw] md:w-auto"
                 type="text"
-                placeholder="Search..."
+                placeholder={t('search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <p className="text-center sm:absolute sm:left-1/2 sm:transform sm:translate-x-25 whitespace-nowrap">
-              {displayProductsCount() + ' Products found'}
+              {displayProductsCount()}
             </p>
             <div className="w-auto flex justify-end">
               <select
@@ -533,9 +498,15 @@ const Collection = () => {
                 name="Order by:"
                 id=""
               >
-                z<option value="relavent">Sort By: Relavent</option>
-                <option value="low-high">Sort By: Low to High Price</option>
-                <option value="high-low">Sort By: High to Low Price</option>
+                <option value="relevant">
+                  {t('sort_by')}: {t('relevant')}
+                </option>
+                <option value="low-high">
+                  {t('sort_by')}: {t('low_to_high')}
+                </option>
+                <option value="high-low">
+                  {t('sort_by')}: {t('high_to_low')}
+                </option>
               </select>
             </div>
           </div>
@@ -552,7 +523,7 @@ const Collection = () => {
                 newArrival={item.newArrival}
                 onSale={item.onSale}
                 onSalePercent={item.onSalePercent}
-                quantity={item.quantity} // Pass quantity prop
+                quantity={item.quantity}
               />
             ))}
           </div>

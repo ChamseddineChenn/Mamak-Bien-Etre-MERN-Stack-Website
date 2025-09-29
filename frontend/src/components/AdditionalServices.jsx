@@ -1,16 +1,18 @@
 import React from 'react';
 import Title from './Title';
 import { assets } from '../assets/assets';
+import { useTranslation } from 'react-i18next';
 
 const AdditionalServices = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="my-20 px-4 sm:px-8 md:px-12 lg:px-20">
       {/* Section Header */}
       <div className="text-center text-3xl py-8">
-        <Title primaryText={'Tailored'} secondaryText={'Services'} />
+        <Title primaryText={t('tailored_services')} />
         <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-[#A6A58A]">
-          Whether it's a gift for them or a treat for you, our tailored services
-          add that extra layer of care and charm
+          {t('services_description')}
         </p>
       </div>
 
@@ -27,10 +29,8 @@ const AdditionalServices = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#5c4b42]/40 to-transparent"></div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 z-10 p-8 text-[#f6ddc4]">
-            <h3 className="text-3xl font-bold mb-3">Gift Wrapping</h3>
-            <p className="text-lg max-w-[60ch]">
-              Elegant packaging with personalized notes for your special gifts
-            </p>
+            <h3 className="text-3xl font-bold mb-3">{t('gift_wrapping')}</h3>
+            <p className="text-lg max-w-[60ch]">{t('gift_wrapping_desc')}</p>
           </div>
         </div>
 
@@ -45,10 +45,8 @@ const AdditionalServices = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#5c4b42]/40 to-transparent"></div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 z-10 p-8 text-[#f6ddc4]">
-            <h3 className="text-3xl font-bold mb-3">Custom Scents</h3>
-            <p className="text-lg max-w-[60ch]">
-              Personalized fragrance blend tailored to your special preferences
-            </p>
+            <h3 className="text-3xl font-bold mb-3">{t('custom_scents')}</h3>
+            <p className="text-lg max-w-[60ch]">{t('custom_scents_desc')}</p>
           </div>
         </div>
 
@@ -63,9 +61,11 @@ const AdditionalServices = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#5c4b42]/40 to-transparent"></div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 z-10 p-8 text-[#f6ddc4]">
-            <h3 className="text-3xl font-bold mb-3">Complementary Samples</h3>
+            <h3 className="text-3xl font-bold mb-3">
+              {t('complementary_samples')}
+            </h3>
             <p className="text-lg max-w-[60ch]">
-              Curated sample selection to help you find your special match
+              {t('complementary_samples_desc')}
             </p>
           </div>
         </div>
