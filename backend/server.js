@@ -77,6 +77,8 @@ async function configureApp() {
     process.env.ADMIN_URL,
     'http://localhost:5173', // Frontend dev server
     'http://localhost:5174', // Admin dev server
+    'http://137.74.43.125:4000', // Add your VPS IP
+    'https://137.74.43.125:4000', // Add for HTTPS
   ].filter(Boolean);
 
   app.use(
@@ -86,10 +88,7 @@ async function configureApp() {
         if (!origin) return callback(null, true);
 
         // Allow same-origin requests (when frontend is served from the same domain)
-        if (
-          origin === `http://localhost:${port}` ||
-          origin === `https://localhost:${port}`
-        ) {
+        if (origin.includes('137.74.43.125') || origin.includes('localhost')) {
           return callback(null, true);
         }
 
