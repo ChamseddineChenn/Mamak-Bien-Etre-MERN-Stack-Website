@@ -9,11 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { assets } from '../assets/assets.js';
 import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext.jsx';
-import { useLanguage } from '../context/LanguageContext'; // Add this import
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import LanguageSelector from './LanguageSelector.jsx';
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
@@ -32,7 +32,6 @@ const Navbar = () => {
     backendURL,
   } = useContext(ShopContext);
   const { t } = useTranslation();
-  const { currentLanguage, changeLanguage } = useLanguage(); // Add this
 
   // Reset flyouts on token change and mobile menu open
   useEffect(() => {
@@ -220,7 +219,7 @@ const Navbar = () => {
         </NavLink>
       </ul>
 
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-4">
         {/* Cart with flyout */}
         <div
           className="relative h-fit w-fit cart-flyout"
@@ -295,49 +294,8 @@ const Navbar = () => {
         </div>
 
         {/* Language Switcher */}
-        <div className="relative group">
-          <button className="flex items-center text-[#3A3A3A]">
-            <span className="text-sm mr-1">
-              {(currentLanguage || 'en').toUpperCase()}
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          <div className="absolute right-0 mt-2 w-16 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-            <div className="py-1">
-              <button
-                onClick={() => changeLanguage('en')}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                EN
-              </button>
-              <button
-                onClick={() => changeLanguage('fr')}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                FR
-              </button>
-              <button
-                onClick={() => changeLanguage('de')}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                DE
-              </button>
-            </div>
-          </div>
-        </div>
+
+        <LanguageSelector />
 
         {/* Mobile menu button */}
         <img
