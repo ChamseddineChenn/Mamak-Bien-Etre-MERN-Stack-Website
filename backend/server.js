@@ -75,20 +75,28 @@ async function configureApp() {
   const allowedOrigins = [
     process.env.FRONTEND_URL,
     process.env.ADMIN_URL,
-    'http://localhost:5173', // Frontend dev server
-    'http://localhost:5174', // Admin dev server
-    'http://137.74.43.125:4000', // Add your VPS IP
-    'https://137.74.43.125:4000', // Add for HTTPS
+    'http://localhost:5173', // Frontend dev server (development only)
+    'http://localhost:5174', // Admin dev server (development only)
+    'https://mamakbienetre.com',
+    'https://www.mamakbienetre.com',
   ].filter(Boolean);
 
   app.use(
     cors({
       origin: function (origin, callback) {
-        // Allow requests with no origin (like same-origin requests, mobile apps, or server-to-server)
+        // Allow requests with no origin (like mobile apps or server-to-server)
         if (!origin) return callback(null, true);
 
-        // Allow same-origin requests (when frontend is served from the same domain)
-        if (origin.includes('137.74.43.125') || origin.includes('localhost')) {
+        // Allow same-origin requests
+        if (origin.includes('mamakbienetre.com')) {
+          return callback(null, true);
+        }
+
+        // Allow localhost only in development
+        if (
+          process.env.NODE_ENV !== 'production' &&
+          origin.includes('localhost')
+        ) {
           return callback(null, true);
         }
 
