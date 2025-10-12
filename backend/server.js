@@ -165,20 +165,6 @@ async function configureApp() {
     next();
   });
 
-  app.get('/api/debug-cookie', (req, res) => {
-    console.log('=== COOKIE SET TEST ===');
-
-    // Force session to be saved and cookie set
-    req.session.debugVisit = (req.session.debugVisit || 0) + 1;
-
-    res.json({
-      message: 'Cookie should be set now',
-      sessionId: req.sessionID,
-      debugVisit: req.session.debugVisit,
-      cookiesInRequest: req.headers.cookie || 'none',
-      sessionIsNew: req.session.isNew,
-    });
-  });
   // API Endpoints
   app.use('/api/user', userRouter);
   app.use('/api/product', productRouter);

@@ -539,7 +539,7 @@ const PlaceOrder = () => {
             }`}
           >
             {isSubmitting
-              ? t('processing_order')
+              ? t('processing')
               : paymentMethod === 'cod'
               ? t('place_order')
               : t('proceed_to_payment')}
