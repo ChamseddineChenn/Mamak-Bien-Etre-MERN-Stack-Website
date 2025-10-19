@@ -80,23 +80,31 @@ async function configureApp() {
   app.use(
     cors({
       origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or server-to-server)
-        if (!origin) return callback(null, true);
+        console.log('CORS check for origin:', origin);
 
-        // Allow same-origin requests
-        if (origin.includes('mamakbienetre.com')) {
+        // Allow requests with no origin
+        if (!origin) {
+          console.log('No origin - allowing');
           return callback(null, true);
         }
 
-        // Allow localhost only in development
+        // Allow all mamakbienetre.com subdomains
+        if (origin.includes('mamakbienetre.com')) {
+          console.log('Allowing mamakbienetre.com origin');
+          return callback(null, true);
+        }
+
+        // Allow localhost in development
         if (
           process.env.NODE_ENV !== 'production' &&
           origin.includes('localhost')
         ) {
+          console.log('Allowing localhost in development');
           return callback(null, true);
         }
 
         if (allowedOrigins.includes(origin)) {
+          console.log('Origin in allowed list');
           callback(null, true);
         } else {
           console.log('CORS blocked for origin:', origin);
