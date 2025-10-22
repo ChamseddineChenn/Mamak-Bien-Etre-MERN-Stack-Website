@@ -2,7 +2,12 @@ import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  description: { type: String, required: true },
+  // Multi-language descriptions
+  description: {
+    en: { type: String, required: true }, // English
+    fr: { type: String, required: true }, // French
+    de: { type: String, required: true }, // German
+  },
   price: { type: Number, required: true },
   image: { type: Array, required: true },
   category: { type: String, required: true },
@@ -13,7 +18,12 @@ const productSchema = new mongoose.Schema({
   newArrival: { type: Boolean, required: true },
   onSale: { type: Boolean, required: true },
   onSalePercent: { type: Number, required: true, min: 0, max: 100, default: 0 },
-  technicalDescription: { type: String, default: '' },
+  // Multi-language technical descriptions
+  technicalDescription: {
+    en: { type: String, default: '' }, // English
+    fr: { type: String, default: '' }, // French
+    de: { type: String, default: '' }, // German
+  },
   views: { type: Number, default: 0 },
   reviews: [
     {

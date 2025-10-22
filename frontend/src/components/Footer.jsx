@@ -1,6 +1,8 @@
 import { assets } from '../assets/assets';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -17,9 +19,15 @@ const Footer = () => {
             {t('company')}
           </p>
           <ul className="flex flex-col gap-1">
-            <li>{t('home')}</li>
-            <li>{t('delivery')}</li>
-            <li>{t('about')}</li>
+            <li className="hover:text-[#C4A484] transition-colors cursor-pointer">
+              {t('about')}
+            </li>
+            <li className="hover:text-[#C4A484] transition-colors cursor-pointer">
+              {t('contact')}
+            </li>
+            <li className="hover:text-[#C4A484] transition-colors cursor-pointer">
+              {t('delivery')}
+            </li>
           </ul>
         </div>
         <div>
@@ -27,9 +35,35 @@ const Footer = () => {
             <p className="text-xl font-medium mb-5 text-[#5c4b42]">
               {t('get_in_touch')}
             </p>
-            <ul className="flex flex-col gap-1">
-              <li>+216 54 859 655</li>
-              <li>contact@mamakbienetre.com</li>
+            <ul className="flex flex-col gap-3">
+              <li>
+                <motion.a
+                  href="tel:+21653527102"
+                  className="flex items-center gap-2 group"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                >
+                  <span className="w-2 h-2 bg-[#C4A484] rounded-full group-hover:bg-[#5c4b42] transition-colors"></span>
+                  <span className="text-[#3A3A3A] group-hover:text-[#5c4b42] transition-colors underline decoration-transparent group-hover:decoration-[#C4A484]">
+                    +216 53 527 102
+                  </span>
+                </motion.a>
+              </li>
+              <li>
+                <motion.a
+                  href="mailto:contact@mamakbienetre.com"
+                  className="flex items-center gap-2 group"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                >
+                  <span className="w-2 h-2 bg-[#C4A484] rounded-full group-hover:bg-[#5c4b42] transition-colors"></span>
+                  <span className="text-[#3A3A3A] group-hover:text-[#5c4b42] transition-colors underline decoration-transparent group-hover:decoration-[#C4A484]">
+                    contact@mamakbienetre.com
+                  </span>
+                </motion.a>
+              </li>
             </ul>
           </div>
           <div>
@@ -38,32 +72,38 @@ const Footer = () => {
             </p>
             <ul className="flex gap-3">
               <li>
-                <a
-                  className="inline-block hover:scale-110 transition-transform"
+                <motion.a
                   href="https://www.facebook.com/profile.php?id=61559341236094"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="inline-block"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
                   <img
                     className="w-10"
                     src={assets.fb_icon}
                     alt="Visit our Facebook page"
                   />
-                </a>
+                </motion.a>
               </li>
               <li>
-                <a
-                  className="inline-block hover:scale-110 transition-transform"
+                <motion.a
                   href="https://www.instagram.com/mamak.bienetre/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="inline-block"
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
                   <img
                     className="w-10"
                     src={assets.ig_icon}
                     alt="Visit our Instagram page"
                   />
-                </a>
+                </motion.a>
               </li>
             </ul>
           </div>

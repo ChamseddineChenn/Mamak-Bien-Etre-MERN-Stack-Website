@@ -5,6 +5,104 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 
+// Helper function to parse multi-language descriptions
+const parseMultiLanguageDescription = (description, currentLanguage = 'en') => {
+  if (!description) return '';
+
+  if (typeof description === 'string') {
+    if (description.startsWith('{') && description.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(description);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[currentLanguage] || parsed.en || '';
+        }
+      } catch (error) {
+        console.error('Error parsing description JSON:', error);
+        return description;
+      }
+    }
+    return description;
+  }
+
+  if (typeof description === 'object' && description !== null) {
+    return description[currentLanguage] || description.en || '';
+  }
+
+  return '';
+};
+
+// Helper function to render markdown content
+const renderMarkdown = (text) => {
+  if (!text)
+    return <p className="text-gray-500 italic">No description available.</p>;
+
+  return text.split('\n').map((line, index) => {
+    if (!line.trim()) return <br key={index} />;
+
+    // Headers
+    if (line.startsWith('# ')) {
+      return (
+        <h1 key={index} className="text-2xl font-bold mt-4 mb-2 text-[#5C4B42]">
+          {line.substring(2)}
+        </h1>
+      );
+    } else if (line.startsWith('## ')) {
+      return (
+        <h2 key={index} className="text-xl font-bold mt-3 mb-2 text-[#5C4B42]">
+          {line.substring(3)}
+        </h2>
+      );
+    } else if (line.startsWith('### ')) {
+      return (
+        <h3 key={index} className="text-lg font-bold mt-2 mb-1 text-[#5C4B42]">
+          {line.substring(4)}
+        </h3>
+      );
+    }
+
+    // Bold text
+    let content = line;
+    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic text
+    content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Bullet points
+    if (line.startsWith('- ') || line.startsWith('• ')) {
+      const bulletContent = line.substring(2);
+      return (
+        <div key={index} className="flex items-start my-1">
+          <span className="mr-2 mt-1">•</span>
+          <span dangerouslySetInnerHTML={{ __html: bulletContent }} />
+        </div>
+      );
+    }
+
+    // Numbered lists
+    if (/^\d+\./.test(line)) {
+      return (
+        <p key={index} className="my-1 ml-4">
+          {line}
+        </p>
+      );
+    }
+
+    // Horizontal rule
+    if (line === '---') {
+      return <hr key={index} className="my-3 border-[#E8D9CC]" />;
+    }
+
+    // Regular paragraph
+    return (
+      <p
+        key={index}
+        className="my-2"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  });
+};
+
 const ProductPreview = ({ token }) => {
   const navigate = useNavigate();
   const { productId } = useParams();
@@ -12,6 +110,14 @@ const ProductPreview = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState('');
   const [activeTab, setActiveTab] = useState('description');
+  const [activeLanguage, setActiveLanguage] = useState('en'); // Default to English for admin preview
+
+  // Language configuration
+  const languages = {
+    en: { name: 'English', flag: '🇬🇧' },
+    fr: { name: 'Français', flag: '🇫🇷' },
+    de: { name: 'Deutsch', flag: '🇩🇪' },
+  };
 
   // Fetch product details
   const fetchProduct = async () => {
@@ -24,7 +130,6 @@ const ProductPreview = ({ token }) => {
       );
 
       if (response.data.success) {
-        console.log(response.data.product);
         setProduct(response.data.product);
         setActiveImage(response.data.product.image[0]);
       } else {
@@ -68,6 +173,37 @@ const ProductPreview = ({ token }) => {
     );
   }
 
+  // Parse descriptions for the active language
+  const description = parseMultiLanguageDescription(
+    product.description,
+    activeLanguage
+  );
+  const technicalDescription = parseMultiLanguageDescription(
+    product.technicalDescription,
+    activeLanguage
+  );
+
+  // Language Tab Component
+  const LanguageTabs = ({ activeLang, onLanguageChange }) => (
+    <div className="flex border-b border-[#E8D9CC] mb-4">
+      {Object.entries(languages).map(([code, lang]) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => onLanguageChange(code)}
+          className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+            activeLang === code
+              ? 'border-[#D6A7A0] text-[#5C4B42] font-medium'
+              : 'border-transparent text-[#5C4B42]/60 hover:text-[#5C4B42]'
+          }`}
+        >
+          <span>{lang.flag}</span>
+          <span>{lang.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <div className="flex justify-between items-center mb-8">
@@ -90,6 +226,17 @@ const ProductPreview = ({ token }) => {
           </svg>
           Back to Products
         </button>
+      </div>
+
+      {/* Language Selector for Preview */}
+      <div className="bg-[#F9F5F2] p-4 rounded-lg mb-6">
+        <h3 className="text-lg font-medium text-[#5C4B42] mb-3">
+          Preview Language
+        </h3>
+        <LanguageTabs
+          activeLang={activeLanguage}
+          onLanguageChange={setActiveLanguage}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -189,7 +336,9 @@ const ProductPreview = ({ token }) => {
           </div>
 
           <div className="mb-6">
-            <p className="text-lg text-[#5C4B42]">{product.description}</p>
+            <div className="text-lg text-[#5C4B42]">
+              {renderMarkdown(description)}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
@@ -239,7 +388,7 @@ const ProductPreview = ({ token }) => {
             }`}
             onClick={() => setActiveTab('description')}
           >
-            Description
+            Technical Description
           </button>
           <button
             className={`px-6 py-3 text-base font-medium transition-colors ${
@@ -266,13 +415,9 @@ const ProductPreview = ({ token }) => {
         <div className="bg-[#F9F5F2] p-6 rounded-b-lg">
           {activeTab === 'description' ? (
             <div className="space-y-4 text-[#5C4B42]">
-              <p className="leading-relaxed">{product.description}</p>
-              <p className="leading-relaxed">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Et
-                ducimus eius eos deleniti cupiditate laudantium ex ea, dolore
-                dolorem quod libero autem doloremque laboriosam ratione corrupti
-                amet, excepturi veniam omnis!
-              </p>
+              <div className="leading-relaxed">
+                {renderMarkdown(technicalDescription)}
+              </div>
             </div>
           ) : activeTab === 'details' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

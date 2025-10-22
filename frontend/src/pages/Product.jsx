@@ -6,6 +6,110 @@ import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../context/LanguageContext';
+
+// Helper function to parse multi-language descriptions
+const parseMultiLanguageDescription = (description, currentLanguage) => {
+  if (!description) return '';
+
+  // If it's already a string (old format or already parsed), return it
+  if (typeof description === 'string') {
+    // Check if it's a JSON string that needs parsing
+    if (description.startsWith('{') && description.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(description);
+        // If it's a multi-language object, get the current language
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[currentLanguage] || parsed.en || '';
+        }
+      } catch (error) {
+        console.error('Error parsing description JSON:', error);
+        // If parsing fails, return the original string
+        return description;
+      }
+    }
+    return description;
+  }
+
+  // If it's already an object, get the current language
+  if (typeof description === 'object' && description !== null) {
+    return description[currentLanguage] || description.en || '';
+  }
+
+  return '';
+};
+
+// Helper function to render markdown content
+const renderMarkdown = (text) => {
+  if (!text)
+    return <p className="text-gray-500 italic">No description available.</p>;
+
+  return text.split('\n').map((line, index) => {
+    if (!line.trim()) return <br key={index} />;
+
+    // Headers
+    if (line.startsWith('# ')) {
+      return (
+        <h1 key={index} className="text-2xl font-bold mt-4 mb-2 text-[#5C4B42]">
+          {line.substring(2)}
+        </h1>
+      );
+    } else if (line.startsWith('## ')) {
+      return (
+        <h2 key={index} className="text-xl font-bold mt-3 mb-2 text-[#5C4B42]">
+          {line.substring(3)}
+        </h2>
+      );
+    } else if (line.startsWith('### ')) {
+      return (
+        <h3 key={index} className="text-lg font-bold mt-2 mb-1 text-[#5C4B42]">
+          {line.substring(4)}
+        </h3>
+      );
+    }
+
+    // Bold text
+    let content = line;
+    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic text
+    content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Bullet points
+    if (line.startsWith('- ') || line.startsWith('• ')) {
+      const bulletContent = line.substring(2);
+      return (
+        <div key={index} className="flex items-start my-1">
+          <span className="mr-2 mt-1">•</span>
+          <span dangerouslySetInnerHTML={{ __html: bulletContent }} />
+        </div>
+      );
+    }
+
+    // Numbered lists
+    if (/^\d+\./.test(line)) {
+      return (
+        <p key={index} className="my-1 ml-4">
+          {line}
+        </p>
+      );
+    }
+
+    // Horizontal rule
+    if (line === '---') {
+      return <hr key={index} className="my-3 border-[#E8D9CC]" />;
+    }
+
+    // Regular paragraph
+    return (
+      <p
+        key={index}
+        className="my-2"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  });
+};
 
 const ProductBreadcrumbs = ({ product }) => {
   const { t } = useTranslation();
@@ -57,6 +161,7 @@ const Product = () => {
     checkReviewEligibility,
     addProductReview,
   } = useContext(ShopContext);
+  const { currentLanguage } = useLanguage();
   const [productData, setProductData] = useState(null);
   const [productImage, setProductImage] = useState('');
   const [activeTab, setActiveTab] = useState('description');
@@ -174,6 +279,16 @@ const Product = () => {
   const averageRating = calculateAverageRating();
   const reviewCount = productData?.reviews?.length || 0;
 
+  // Get description and technical description based on current language
+  const description = parseMultiLanguageDescription(
+    productData?.description,
+    currentLanguage
+  );
+  const technicalDescription = parseMultiLanguageDescription(
+    productData?.technicalDescription,
+    currentLanguage
+  );
+
   return productData ? (
     <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A] ">
       {/* Product Data div */}
@@ -245,9 +360,9 @@ const Product = () => {
             </p>
 
             {/* Description */}
-            <p className="text-lg leading-relaxed mb-8 text-[#3A3A3A]/90 max-w-3xl">
-              {productData.description}
-            </p>
+            <div className="text-lg leading-relaxed mb-8 text-[#3A3A3A]/90 max-w-3xl">
+              {renderMarkdown(description)}
+            </div>
 
             {/* Stock Indicator */}
             <div className="mb-4">
@@ -330,12 +445,14 @@ const Product = () => {
         <div className="bg-[#F9F5F2] p-4 md:px-8 rounded-b-lg">
           {activeTab === 'description' ? (
             <div className="text-[#3A3A3A]/90">
-              {productData.technicalDescription && (
+              {technicalDescription && (
                 <>
                   <h3 className="font-semibold mt-6">
                     {t('technical_specifications')}
                   </h3>
-                  <p>{productData.technicalDescription}</p>
+                  <div className="prose max-w-none">
+                    {renderMarkdown(technicalDescription)}
+                  </div>
                 </>
               )}
             </div>

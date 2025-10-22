@@ -1,8 +1,51 @@
 import { currency } from '../constants/Exports';
 import { useNavigate } from 'react-router-dom';
 
+// Helper function to parse multi-language descriptions
+const parseMultiLanguageDescription = (description, currentLanguage = 'en') => {
+  if (!description) return '';
+
+  if (typeof description === 'string') {
+    if (description.startsWith('{') && description.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(description);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[currentLanguage] || parsed.en || '';
+        }
+      } catch (error) {
+        console.error('Error parsing description JSON:', error);
+        return description;
+      }
+    }
+    return description;
+  }
+
+  if (typeof description === 'object' && description !== null) {
+    return description[currentLanguage] || description.en || '';
+  }
+
+  return '';
+};
+
+// Helper function to strip markdown for preview
+const stripMarkdown = (text) => {
+  if (!text) return '';
+  return (
+    text
+      .replace(/#{1,6}\s?/g, '') // Remove headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic
+      .replace(/- /g, '') // Remove bullet points
+      .replace(/\n/g, ' ') // Replace newlines with spaces
+      .substring(0, 120) + '...'
+  ); // Limit length
+};
+
 const ProductCard = ({ product, onDelete }) => {
   const navigate = useNavigate();
+  const description = parseMultiLanguageDescription(product.description, 'en');
+  const strippedDescription = stripMarkdown(description);
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#E8D9CC] transition-all hover:shadow-md group">
       {/* Product Image */}
@@ -69,8 +112,10 @@ const ProductCard = ({ product, onDelete }) => {
                 <>
                   <span className="text-xl font-bold text-[#D6A7A0] whitespace-nowrap">
                     {currency}
-                    {product.price.toFixed(2) *
-                      (1 - product.onSalePercent / 100)}
+                    {(
+                      product.price *
+                      (1 - product.onSalePercent / 100)
+                    ).toFixed(2)}
                   </span>
                   <span className="ml-2 text-base text-gray-400 line-through whitespace-nowrap">
                     {currency}
@@ -88,7 +133,7 @@ const ProductCard = ({ product, onDelete }) => {
         </div>
 
         <p className="text-[#8C7B6B] text-sm mb-4 line-clamp-2 h-12">
-          {product.description}
+          {strippedDescription}
         </p>
 
         <div className="flex flex-wrap gap-2 mb-5">

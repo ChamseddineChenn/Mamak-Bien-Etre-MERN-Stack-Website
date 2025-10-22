@@ -19,6 +19,7 @@ const uploadToCloudinary = async (file) => {
     throw new Error('Image upload failed');
   }
 };
+
 // Helper function to extract public ID from Cloudinary URL
 const extractPublicIdFromUrl = (imageUrl) => {
   const urlParts = imageUrl.split('/');
@@ -72,14 +73,63 @@ const deleteImageFromStorage = async (imageUrl) => {
   }
 };
 
+// Helper function to parse multi-language fields
+const parseMultiLanguageField = (fieldValue, fieldName) => {
+  if (!fieldValue) {
+    return { en: '', fr: '', de: '' };
+  }
+
+  try {
+    // If it's already an object, return it
+    if (typeof fieldValue === 'object') {
+      return fieldValue;
+    }
+
+    // If it's a string, try to parse it as JSON
+    if (typeof fieldValue === 'string') {
+      const parsed = JSON.parse(fieldValue);
+
+      // Ensure it has the expected structure
+      if (typeof parsed === 'object' && parsed !== null) {
+        return {
+          en: parsed.en || '',
+          fr: parsed.fr || '',
+          de: parsed.de || '',
+        };
+      }
+    }
+
+    console.warn(`Invalid format for ${fieldName}, using default structure`);
+    return { en: '', fr: '', de: '' };
+  } catch (error) {
+    console.error(`Error parsing ${fieldName}:`, error);
+    // If parsing fails, create default structure with the string value in English
+    return {
+      en: typeof fieldValue === 'string' ? fieldValue : '',
+      fr: '',
+      de: '',
+    };
+  }
+};
+
 // Adding product function
 const addProduct = async (req, res) => {
   try {
+    // Parse multi-language fields
+    const description = parseMultiLanguageField(
+      req.body.description,
+      'description'
+    );
+    const technicalDescription = parseMultiLanguageField(
+      req.body.technicalDescription,
+      'technicalDescription'
+    );
+
     // Parse product data
     const productData = {
       name: req.body.name,
-      description: req.body.description,
-      technicalDescription: req.body.technicalDescription || '',
+      description: description,
+      technicalDescription: technicalDescription,
       price: Number(req.body.price),
       category: req.body.category,
       subCategory: req.body.subCategory,
@@ -160,10 +210,23 @@ const editProduct = async (req, res) => {
       });
     }
 
+    // Parse multi-language fields
+    const description = req.body.description
+      ? parseMultiLanguageField(req.body.description, 'description')
+      : product.description;
+
+    const technicalDescription = req.body.technicalDescription
+      ? parseMultiLanguageField(
+          req.body.technicalDescription,
+          'technicalDescription'
+        )
+      : product.technicalDescription;
+
     // Prepare update data
     const updateData = {
       name: req.body.name || product.name,
-      description: req.body.description || product.description,
+      description: description,
+      technicalDescription: technicalDescription,
       price: req.body.price ? Number(req.body.price) : product.price,
       category: req.body.category || product.category,
       subCategory: req.body.subCategory || product.subCategory,
@@ -227,8 +290,7 @@ const editProduct = async (req, res) => {
 
     // Add images to update data
     updateData.image = updatedImages;
-    updateData.technicalDescription =
-      req.body.technicalDescription || product.technicalDescription;
+
     // Update product in database
     const updatedProduct = await productModel.findByIdAndUpdate(
       id,

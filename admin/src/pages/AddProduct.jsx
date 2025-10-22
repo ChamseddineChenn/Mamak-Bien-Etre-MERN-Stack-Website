@@ -3,15 +3,20 @@ import { assets } from '../assets/assets';
 import axios from 'axios';
 import { backendURL, currency } from '../constants/Exports.js';
 import { toast } from 'react-toastify';
+import MarkdownEditor from '../components/MarkdownEditor.jsx';
 
 const AddProduct = ({ token }) => {
   // State for images
   const [images, setImages] = useState(Array(5).fill(null));
 
-  // State for form data
+  // State for form data - updated for multi-language
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
+    description: {
+      en: '',
+      fr: '',
+      de: '',
+    },
     price: '',
     category: '',
     subCategory: '',
@@ -20,8 +25,16 @@ const AddProduct = ({ token }) => {
     newArrival: false,
     onSale: false,
     onSalePercent: '',
-    technicalDescription: '',
+    technicalDescription: {
+      en: '',
+      fr: '',
+      de: '',
+    },
   });
+
+  // State for active language tabs
+  const [activeDescLang, setActiveDescLang] = useState('en');
+  const [activeTechLang, setActiveTechLang] = useState('en');
 
   // State for validation errors
   const [errors, setErrors] = useState({
@@ -34,6 +47,13 @@ const AddProduct = ({ token }) => {
     'Home Fragrance': ['Classic Candles', 'Fondant Candles', 'Diffusers'],
     Scents: ['Air Freshner'],
     'Bundles & Sets': ['House Warming', 'Gift'],
+  };
+
+  // Language configuration
+  const languages = {
+    en: { name: 'English', flag: '🇬🇧' },
+    fr: { name: 'Français', flag: '🇫🇷' },
+    de: { name: 'Deutsch', flag: '🇩🇪' },
   };
 
   // Handle image uploads
@@ -75,6 +95,17 @@ const AddProduct = ({ token }) => {
     }
   };
 
+  // Handle multi-language description changes
+  const handleDescriptionChange = (lang, value, field = 'description') => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: {
+        ...prev[field],
+        [lang]: value,
+      },
+    }));
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,6 +121,12 @@ const AddProduct = ({ token }) => {
       return;
     }
 
+    // Validate that at least English description is provided
+    if (!formData.description.en.trim()) {
+      toast.error('Please provide at least the English description');
+      return;
+    }
+
     try {
       // Create FormData container
       const formDataToSend = new FormData();
@@ -101,9 +138,13 @@ const AddProduct = ({ token }) => {
         }
       });
 
-      // Add text fields
+      // Add text fields - convert objects to JSON strings for FormData
       Object.entries(formData).forEach(([key, value]) => {
-        formDataToSend.append(key, value);
+        if (key === 'description' || key === 'technicalDescription') {
+          formDataToSend.append(key, JSON.stringify(value));
+        } else {
+          formDataToSend.append(key, value);
+        }
       });
 
       // Send to backend
@@ -120,7 +161,7 @@ const AddProduct = ({ token }) => {
         toast.success('Product added successfully!');
         setFormData({
           name: '',
-          description: '',
+          description: { en: '', fr: '', de: '' },
           price: '',
           category: '',
           subCategory: '',
@@ -129,8 +170,11 @@ const AddProduct = ({ token }) => {
           newArrival: false,
           onSale: false,
           onSalePercent: '',
+          technicalDescription: { en: '', fr: '', de: '' },
         });
         setImages(Array(5).fill(null));
+        setActiveDescLang('en');
+        setActiveTechLang('en');
       }
     } catch (error) {
       console.error('Product addition failed:', error);
@@ -138,8 +182,29 @@ const AddProduct = ({ token }) => {
     }
   };
 
+  // Language Tab Component
+  const LanguageTabs = ({ activeLang, onLanguageChange }) => (
+    <div className="flex border-b border-[#E8D9CC] mb-4">
+      {Object.entries(languages).map(([code, lang]) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => onLanguageChange(code)}
+          className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+            activeLang === code
+              ? 'border-[#D6A7A0] text-[#5C4B42] font-medium'
+              : 'border-transparent text-[#5C4B42]/60 hover:text-[#5C4B42]'
+          }`}
+        >
+          <span>{lang.flag}</span>
+          <span>{lang.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-[#5C4B42]">Add New Product</h1>
         <p className="text-[#8C7B6B] mt-2">
@@ -232,19 +297,38 @@ const AddProduct = ({ token }) => {
           </div>
         </div>
 
-        {/* Description */}
+        {/* Multi-language Description Section */}
         <div className="bg-[#F9F5F2] p-5 rounded-lg">
-          <label className="block text-base font-medium text-[#5C4B42] mb-2">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full min-h-[120px] px-4 py-3 border border-[#E8D9CC] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#D6A7A0]"
-            placeholder="Enter detailed product description"
-            required
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-base font-medium text-[#5C4B42]">
+              Product Description
+            </label>
+            <span className="text-sm text-[#5C4B42]/60">
+              Required for all languages
+            </span>
+          </div>
+
+          <LanguageTabs
+            activeLang={activeDescLang}
+            onLanguageChange={setActiveDescLang}
+            type="description"
           />
+
+          {Object.entries(languages).map(([code, lang]) => (
+            <div
+              key={code}
+              className={activeDescLang === code ? 'block' : 'hidden'}
+            >
+              <MarkdownEditor
+                value={formData.description[code]}
+                onChange={(value) =>
+                  handleDescriptionChange(code, value, 'description')
+                }
+                placeholder={`Enter product description in ${lang.name} using markdown formatting...`}
+                height="250px"
+              />
+            </div>
+          ))}
         </div>
 
         {/* Category Section */}
@@ -398,18 +482,38 @@ const AddProduct = ({ token }) => {
           </div>
         </div>
 
-        {/* Technical Description */}
+        {/* Multi-language Technical Description Section */}
         <div className="bg-[#F9F5F2] p-5 rounded-lg">
-          <label className="block text-base font-medium text-[#5C4B42] mb-2">
-            Technical Description
-          </label>
-          <textarea
-            name="technicalDescription"
-            value={formData.technicalDescription}
-            onChange={handleChange}
-            className="w-full min-h-[120px] px-4 py-3 border border-[#E8D9CC] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#D6A7A0]"
-            placeholder="Enter technical specifications"
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-base font-medium text-[#5C4B42]">
+              Technical Description
+            </label>
+            <span className="text-sm text-[#5C4B42]/60">
+              Optional for all languages
+            </span>
+          </div>
+
+          <LanguageTabs
+            activeLang={activeTechLang}
+            onLanguageChange={setActiveTechLang}
+            type="technical"
           />
+
+          {Object.entries(languages).map(([code, lang]) => (
+            <div
+              key={code}
+              className={activeTechLang === code ? 'block' : 'hidden'}
+            >
+              <MarkdownEditor
+                value={formData.technicalDescription[code]}
+                onChange={(value) =>
+                  handleDescriptionChange(code, value, 'technicalDescription')
+                }
+                placeholder={`Enter technical description in ${lang.name} using markdown formatting...`}
+                height="200px"
+              />
+            </div>
+          ))}
         </div>
 
         {/* Submit Button */}

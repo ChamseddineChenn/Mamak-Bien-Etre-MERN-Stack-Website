@@ -3,6 +3,33 @@ import axios from 'axios';
 import { backendURL } from '../constants/Exports';
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
+import MarkdownEditor from '../components/MarkdownEditor';
+
+// Helper function to parse multi-language descriptions
+const parseMultiLanguageDescription = (description, currentLanguage = 'en') => {
+  if (!description) return '';
+
+  if (typeof description === 'string') {
+    if (description.startsWith('{') && description.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(description);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[currentLanguage] || parsed.en || '';
+        }
+      } catch (error) {
+        console.error('Error parsing description JSON:', error);
+        return description;
+      }
+    }
+    return description;
+  }
+
+  if (typeof description === 'object' && description !== null) {
+    return description[currentLanguage] || description.en || '';
+  }
+
+  return '';
+};
 
 const ProductEdit = ({ token }) => {
   const { productId } = useParams();
@@ -11,7 +38,16 @@ const ProductEdit = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
+    description: {
+      en: '',
+      fr: '',
+      de: '',
+    },
+    technicalDescription: {
+      en: '',
+      fr: '',
+      de: '',
+    },
     price: '',
     quantity: '',
     category: '',
@@ -24,6 +60,36 @@ const ProductEdit = ({ token }) => {
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [newImages, setNewImages] = useState([]);
+  const [activeDescLang, setActiveDescLang] = useState('en');
+  const [activeTechLang, setActiveTechLang] = useState('en');
+
+  // Language configuration
+  const languages = {
+    en: { name: 'English', flag: '🇬🇧' },
+    fr: { name: 'Français', flag: '🇫🇷' },
+    de: { name: 'Deutsch', flag: '🇩🇪' },
+  };
+
+  // Language Tab Component
+  const LanguageTabs = ({ activeLang, onLanguageChange }) => (
+    <div className="flex border-b border-[#E8D9CC] mb-4">
+      {Object.entries(languages).map(([code, lang]) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => onLanguageChange(code)}
+          className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+            activeLang === code
+              ? 'border-[#D6A7A0] text-[#5C4B42] font-medium'
+              : 'border-transparent text-[#5C4B42]/60 hover:text-[#5C4B42]'
+          }`}
+        >
+          <span>{lang.flag}</span>
+          <span>{lang.name}</span>
+        </button>
+      ))}
+    </div>
+  );
 
   // Fetch product details
   useEffect(() => {
@@ -39,9 +105,24 @@ const ProductEdit = ({ token }) => {
         if (response.data.success) {
           const prod = response.data.product;
           setProduct(prod);
+
+          // Parse multi-language descriptions
+          const description = {
+            en: parseMultiLanguageDescription(prod.description, 'en'),
+            fr: parseMultiLanguageDescription(prod.description, 'fr'),
+            de: parseMultiLanguageDescription(prod.description, 'de'),
+          };
+
+          const technicalDescription = {
+            en: parseMultiLanguageDescription(prod.technicalDescription, 'en'),
+            fr: parseMultiLanguageDescription(prod.technicalDescription, 'fr'),
+            de: parseMultiLanguageDescription(prod.technicalDescription, 'de'),
+          };
+
           setFormData({
             name: prod.name,
-            description: prod.description,
+            description: description,
+            technicalDescription: technicalDescription,
             price: prod.price.toString(),
             quantity: prod.quantity.toString(),
             category: prod.category,
@@ -77,6 +158,17 @@ const ProductEdit = ({ token }) => {
     });
   };
 
+  // Handle multi-language description changes
+  const handleDescriptionChange = (lang, value, field = 'description') => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: {
+        ...prev[field],
+        [lang]: value,
+      },
+    }));
+  };
+
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setNewImages([...newImages, ...files]);
@@ -106,6 +198,7 @@ const ProductEdit = ({ token }) => {
       });
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -117,7 +210,11 @@ const ProductEdit = ({ token }) => {
 
       // Append form data with proper formatting
       form.append('name', formData.name);
-      form.append('description', formData.description);
+      form.append('description', JSON.stringify(formData.description));
+      form.append(
+        'technicalDescription',
+        JSON.stringify(formData.technicalDescription)
+      );
       form.append('price', formData.price.toString());
       form.append('quantity', formData.quantity.toString());
       form.append('category', formData.category);
@@ -183,7 +280,7 @@ const ProductEdit = ({ token }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#5C4B42]">Edit Product</h1>
         <button
@@ -287,20 +384,40 @@ const ProductEdit = ({ token }) => {
               />
             </div>
           </div>
+        </div>
 
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-[#5C4B42] mb-1">
-              Description *
+        {/* Multi-language Description Section */}
+        <div className="bg-[#F9F5F2] p-6 rounded-xl">
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-base font-medium text-[#5C4B42]">
+              Product Description
             </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="4"
-              className="w-full px-4 py-2 border border-[#E8D9CC] rounded-lg focus:ring-[#D6A7A0] focus:border-[#D6A7A0]"
-              required
-            ></textarea>
+            <span className="text-sm text-[#5C4B42]/60">
+              Required for all languages
+            </span>
           </div>
+
+          <LanguageTabs
+            activeLang={activeDescLang}
+            onLanguageChange={setActiveDescLang}
+            type="description"
+          />
+
+          {Object.entries(languages).map(([code, lang]) => (
+            <div
+              key={code}
+              className={activeDescLang === code ? 'block' : 'hidden'}
+            >
+              <MarkdownEditor
+                value={formData.description[code]}
+                onChange={(value) =>
+                  handleDescriptionChange(code, value, 'description')
+                }
+                placeholder={`Enter product description in ${lang.name} using markdown formatting...`}
+                height="250px"
+              />
+            </div>
+          ))}
         </div>
 
         {/* Images */}
@@ -358,6 +475,40 @@ const ProductEdit = ({ token }) => {
           <p className="mt-1 text-sm text-[#8C7B6B]">
             Add up to 10 images (JPEG, PNG, etc.)
           </p>
+        </div>
+
+        {/* Multi-language Technical Description Section */}
+        <div className="bg-[#F9F5F2] p-6 rounded-xl">
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-base font-medium text-[#5C4B42]">
+              Technical Description
+            </label>
+            <span className="text-sm text-[#5C4B42]/60">
+              Optional for all languages
+            </span>
+          </div>
+
+          <LanguageTabs
+            activeLang={activeTechLang}
+            onLanguageChange={setActiveTechLang}
+            type="technical"
+          />
+
+          {Object.entries(languages).map(([code, lang]) => (
+            <div
+              key={code}
+              className={activeTechLang === code ? 'block' : 'hidden'}
+            >
+              <MarkdownEditor
+                value={formData.technicalDescription[code]}
+                onChange={(value) =>
+                  handleDescriptionChange(code, value, 'technicalDescription')
+                }
+                placeholder={`Enter technical description in ${lang.name} using markdown formatting...`}
+                height="200px"
+              />
+            </div>
+          ))}
         </div>
 
         {/* Flags & Status */}

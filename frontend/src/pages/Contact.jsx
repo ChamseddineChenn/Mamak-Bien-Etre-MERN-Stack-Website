@@ -3,6 +3,8 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const Contact = () => {
   const { t } = useTranslation();
@@ -40,7 +42,7 @@ const Contact = () => {
                 {t('our_store')}
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <img
                     src={assets.address_icon}
@@ -65,7 +67,22 @@ const Contact = () => {
                   />
                   <div>
                     <p className="font-medium text-[#3A3A3A]">{t('phone')}</p>
-                    <p className="text-[#5C4B42]/90">+216 54 859 655</p>
+                    <motion.a
+                      href="tel:+21653527102"
+                      className="flex items-center gap-3 group"
+                      whileHover={{ scale: 1.05, x: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 17,
+                      }}
+                    >
+                      <span className="w-2 h-2 bg-[#C4A484] rounded-full group-hover:bg-[#5c4b42] transition-colors flex-shrink-0"></span>
+                      <span className="text-[#5C4B42]/90 group-hover:text-[#5c4b42] transition-colors underline decoration-transparent group-hover:decoration-[#C4A484] text-lg font-medium">
+                        +216 53 527 102
+                      </span>
+                    </motion.a>
                   </div>
                 </div>
 
@@ -77,9 +94,22 @@ const Contact = () => {
                   />
                   <div>
                     <p className="font-medium text-[#3A3A3A]">{t('email')}</p>
-                    <p className="text-[#5C4B42]/90">
-                      contact@mamakbienetre.com
-                    </p>
+                    <motion.a
+                      href="mailto:contact@mamakbienetre.com"
+                      className="flex items-center gap-3 group"
+                      whileHover={{ scale: 1.05, x: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 17,
+                      }}
+                    >
+                      <span className="w-2 h-2 bg-[#C4A484] rounded-full group-hover:bg-[#5c4b42] transition-colors flex-shrink-0"></span>
+                      <span className="text-[#5C4B42]/90 group-hover:text-[#5c4b42] transition-colors underline decoration-transparent group-hover:decoration-[#C4A484] text-lg">
+                        contact@mamakbienetre.com
+                      </span>
+                    </motion.a>
                   </div>
                 </div>
               </div>
@@ -91,9 +121,14 @@ const Contact = () => {
                 {t('join_our_team')}
               </h2>
               <p className="text-[#5C4B42]/90 mb-6">{t('join_team_desc')}</p>
-              <button className="py-3 px-8 bg-[#D6A7A0] hover:bg-[#C79790] text-white font-medium rounded-lg transition-colors duration-300 shadow-sm hover:shadow-md">
+              <motion.button
+                className="py-3 px-8 bg-[#D6A7A0] hover:bg-[#C79790] text-white font-medium rounded-lg transition-colors duration-300 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
                 {t('explore_jobs')}
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -101,7 +136,12 @@ const Contact = () => {
 
       {/* Map Section */}
       <div className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="bg-white p-8 rounded-xl shadow-md">
+        <motion.div
+          className="bg-white p-8 rounded-xl shadow-md"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-2xl font-serif text-[#5C4B42] mb-6">
             {t('find_us')}
           </h2>
@@ -117,7 +157,7 @@ const Contact = () => {
               title={t('map_title')}
             ></iframe>
           </div>
-        </div>
+        </motion.div>
       </div>
       <div className="pb-5">
         <NewletterBox />
