@@ -14,9 +14,19 @@ const getCategoryTranslationKey = (categoryName) => {
     'Home Fragrance': 'home_fragrance',
     'Classic Candles': 'classic_candles',
     'Fondant Candles': 'fondant_candles',
+    'Poured Candle': 'poured_candle',
+    'Linen Candle': 'linen_candle',
+    'Melt Candle': 'melt_candle',
+    'Gemstone Candle': 'gemstone_candle',
+    'Art Pouring': 'art_pouring',
+    'Mug Pouring': 'mug_pouring',
+    'Decorative Pouring': 'decorative_pouring',
     Diffusers: 'diffusers',
     Scents: 'scents',
     'Packs & Sets': 'packs_sets',
+    Gift: 'gift',
+    'House Warming': 'house_warming',
+    'Special Offer': 'special_offer',
     'Complete Collection': 'complete_collection',
   };
 
@@ -288,39 +298,116 @@ const Collection = () => {
     const { t } = useTranslation();
 
     return (
-      <div className="border rounded-2xl bg-[#E6E4D8] h-80 md:h-52 w-[35vw] p-6 shadow-xl">
-        <div className="flex flex-col py-1">
-          <a
-            href="#"
-            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-            onClick={() => {
-              displayChosenSubCategory('Home Fragrance', 'Classic Candles');
-            }}
-          >
-            {t('classic_candles')}
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-            onClick={() => {
-              displayChosenSubCategory('Home Fragrance', 'Fondant Candles');
-            }}
-          >
-            {t('fondant_candles')}
-          </a>
-          <a
-            href="#"
-            className="block rounded-sm  px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
-            onClick={() => {
-              displayChosenSubCategory('Home Fragrance', 'Diffusers');
-            }}
-          >
-            {t('diffusers')}
-          </a>
+      <div className="border rounded-2xl bg-[#E6E4D8] h-96 w-[35vw] p-6 shadow-xl">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col py-1">
+            <h3 className="font-medium text-[#5C4B42] mb-2 text-sm">Candles</h3>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Classic Candles');
+              }}
+            >
+              {t('classic_candles')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Fondant Candles');
+              }}
+            >
+              {t('fondant_candles')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Poured Candle');
+              }}
+            >
+              {t('poured_candle')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Linen Candle');
+              }}
+            >
+              {t('linen_candle')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Gemstone Candle');
+              }}
+            >
+              {t('gemstone_candle')}
+            </a>
+          </div>
+
+          <div className="flex flex-col py-1">
+            <h3 className="font-medium text-[#5C4B42] mb-2 text-sm">Pouring</h3>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Art Pouring');
+              }}
+            >
+              {t('art_pouring')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory('Home Fragrance', 'Mug Pouring');
+              }}
+            >
+              {t('mug_pouring')}
+            </a>
+            <a
+              href="#"
+              className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+              onClick={() => {
+                displayChosenSubCategory(
+                  'Home Fragrance',
+                  'Decorative Pouring'
+                );
+              }}
+            >
+              {t('decorative_pouring')}
+            </a>
+
+            <div className="mt-4">
+              <h3 className="font-medium text-[#5C4B42] mb-2 text-sm">Other</h3>
+              <a
+                href="#"
+                className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+                onClick={() => {
+                  displayChosenSubCategory('Home Fragrance', 'Diffusers');
+                }}
+              >
+                {t('diffusers')}
+              </a>
+              <a
+                href="#"
+                className="block rounded-sm px-3 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+                onClick={() => {
+                  displayChosenSubCategory('Home Fragrance', 'Scents');
+                }}
+              >
+                {t('scents')}
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* View All Button */}
-        <div className="rounded-sm bg-[#D6A7A0]/70">
+        <div className="rounded-sm bg-[#D6A7A0]/70 mt-4">
           <button
             value={'Home Fragrance'}
             onClick={() => displayChosenCategory('Home Fragrance')}
@@ -334,30 +421,76 @@ const Collection = () => {
     );
   };
 
+  {
+    /* Packs & Sets Content */
+  }
+
+  const PacksSetsContent = () => {
+    const { t } = useTranslation();
+
+    return (
+      <div className="border rounded-2xl bg-[#E6E4D8] h-52 w-[25vw] px-6 py-2 shadow-xl">
+        <div className="flex flex-col py-1">
+          <a
+            href="#"
+            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+            onClick={() => {
+              displayChosenSubCategory('Packs & Sets', 'Gift');
+            }}
+          >
+            {t('gift')}
+          </a>
+          <a
+            href="#"
+            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+            onClick={() => {
+              displayChosenSubCategory('Packs & Sets', 'House Warming');
+            }}
+          >
+            {t('house_warming')}
+          </a>
+          <a
+            href="#"
+            className="block rounded-sm px-4 py-2 text-sm hover:bg-[#D6A7A0] text-[#3A3A3A]"
+            onClick={() => {
+              displayChosenSubCategory('Packs & Sets', 'Special Offer');
+            }}
+          >
+            {t('special_offer')}
+          </a>
+        </div>
+
+        {/* View All Button */}
+        <div className="rounded-sm bg-[#D6A7A0]/70 mt-4">
+          <button
+            value={'Packs & Sets'}
+            onClick={() => displayChosenCategory('Packs & Sets')}
+            href="#"
+            className="block w-full px-4 py-3 text-sm text-font font-medium text-center text-[#3A3A3A] hover:bg-[#D6A7A0]/40 transition-colors"
+          >
+            {t('view_all')} {t('packs_sets')} →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col mt-19.25">
       <div className="flex items-center bg-[#E6E4D8] h-15 w-full shadow-md z-45">
-        <div className="flex gap-5 md:gap-20 justify-center md:w-full ps-5 pe-5">
+        <div className="flex gap-5 md:gap-20 justify-center md:w-full ps-5 pe-32">
           <FlyoutLink href="#" FlyoutContent={HomeFragranceContent}>
             <p onClick={() => displayChosenCategory('Home Fragrance')}>
               {t('home_fragrance')}
             </p>
           </FlyoutLink>
-          {/* Simple links without dropdown for Scents and Packs & Sets */}
-          <div className="relative h-fit w-fit">
-            <a className="relative text-[#3A3A3A]" href="#">
-              <p onClick={() => displayChosenCategory('Scents')}>
-                {t('scents')}
-              </p>
-            </a>
-          </div>
-          <div className="relative h-fit w-fit">
-            <a className="relative text-[#3A3A3A]" href="#">
-              <p onClick={() => displayChosenCategory('Packs & Sets')}>
-                {t('packs_sets')}
-              </p>
-            </a>
-          </div>
+
+          {/* Packs & Sets with dropdown */}
+          <FlyoutLink href="#" FlyoutContent={PacksSetsContent}>
+            <p onClick={() => displayChosenCategory('Packs & Sets')}>
+              {t('packs_sets')}
+            </p>
+          </FlyoutLink>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row mt-5 sm:mt-0 ">
@@ -444,9 +577,9 @@ const Collection = () => {
           </div>
 
           {/* Reset Filters Button */}
-          <div className="mt-6 px-5">
+          <div className="md:mt-6 md:px-5">
             <button
-              className="w-full py-2 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] transition-colors"
+              className="w-full py-2 my-2 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] transition-colors"
               onClick={() => {
                 setMinPrice('');
                 setMaxPrice('');

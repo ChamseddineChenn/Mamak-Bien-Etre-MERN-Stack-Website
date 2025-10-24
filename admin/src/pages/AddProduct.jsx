@@ -42,11 +42,22 @@ const AddProduct = ({ token }) => {
     subCategory: false,
   });
 
-  // Category to subcategory mapping
+  // Category to subcategory mapping - UPDATED WITH NEW SUBCATEGORIES
   const categoryMap = {
-    'Home Fragrance': ['Classic Candles', 'Fondant Candles', 'Diffusers'],
-    Scents: ['Air Freshner'],
-    'Bundles & Sets': ['House Warming', 'Gift'],
+    'Home Fragrance': [
+      'Classic Candles',
+      'Fondant Candles',
+      'Poured Candle',
+      'Linen Candle',
+      'Melt Candle',
+      'Gemstone Candle',
+      'Art Pouring',
+      'Mug Pouring',
+      'Decorative Pouring',
+      'Diffusers',
+      'Scents',
+    ],
+    'Packs & Sets': ['Gift', 'House Warming', 'Special Offer'],
   };
 
   // Language configuration

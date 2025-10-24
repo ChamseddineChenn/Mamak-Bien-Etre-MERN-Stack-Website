@@ -31,6 +31,24 @@ const parseMultiLanguageDescription = (description, currentLanguage = 'en') => {
   return '';
 };
 
+// Category to subcategory mapping - same as in AddProduct.jsx
+const categoryMap = {
+  'Home Fragrance': [
+    'Classic Candles',
+    'Fondant Candles',
+    'Poured Candle',
+    'Linen Candle',
+    'Melt Candle',
+    'Gemstone Candle',
+    'Art Pouring',
+    'Mug Pouring',
+    'Decorative Pouring',
+    'Diffusers',
+    'Scents',
+  ],
+  'Packs & Sets': ['Gift', 'House Warming', 'Special Offer'],
+};
+
 const ProductEdit = ({ token }) => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -152,10 +170,25 @@ const ProductEdit = ({ token }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+
+    // If category changes, reset subcategory
+    if (name === 'category') {
+      setFormData({
+        ...formData,
+        category: value,
+        subCategory: '', // Reset subcategory when category changes
+      });
+    } else if (name === 'subCategory') {
+      setFormData({
+        ...formData,
+        subCategory: value,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value,
+      });
+    }
   };
 
   // Handle multi-language description changes
@@ -201,6 +234,12 @@ const ProductEdit = ({ token }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate category and subcategory
+    if (!formData.category || !formData.subCategory) {
+      toast.error('Please select both category and subcategory');
+      return;
+    }
 
     try {
       const form = new FormData();
@@ -341,32 +380,54 @@ const ProductEdit = ({ token }) => {
               />
             </div>
 
+            {/* Updated: Category Dropdown */}
             <div>
               <label className="block text-sm font-medium text-[#5C4B42] mb-1">
                 Category *
               </label>
-              <input
-                type="text"
+              <select
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-[#E8D9CC] rounded-lg focus:ring-[#D6A7A0] focus:border-[#D6A7A0]"
+                className="w-full px-4 py-2 border border-[#E8D9CC] rounded-lg bg-white focus:ring-[#D6A7A0] focus:border-[#D6A7A0]"
                 required
-              />
+              >
+                <option value="" disabled>
+                  Select category
+                </option>
+                {Object.keys(categoryMap).map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Updated: Subcategory Dropdown */}
             <div>
               <label className="block text-sm font-medium text-[#5C4B42] mb-1">
                 Subcategory *
               </label>
-              <input
-                type="text"
+              <select
                 name="subCategory"
                 value={formData.subCategory}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-[#E8D9CC] rounded-lg focus:ring-[#D6A7A0] focus:border-[#D6A7A0]"
+                disabled={!formData.category}
+                className="w-full px-4 py-2 border border-[#E8D9CC] rounded-lg bg-white focus:ring-[#D6A7A0] focus:border-[#D6A7A0]"
                 required
-              />
+              >
+                <option value="" disabled>
+                  {formData.category
+                    ? 'Select subcategory'
+                    : 'Select category first'}
+                </option>
+                {formData.category &&
+                  categoryMap[formData.category].map((subcategory) => (
+                    <option key={subcategory} value={subcategory}>
+                      {subcategory}
+                    </option>
+                  ))}
+              </select>
             </div>
 
             <div>
@@ -400,7 +461,6 @@ const ProductEdit = ({ token }) => {
           <LanguageTabs
             activeLang={activeDescLang}
             onLanguageChange={setActiveDescLang}
-            type="description"
           />
 
           {Object.entries(languages).map(([code, lang]) => (
@@ -491,7 +551,6 @@ const ProductEdit = ({ token }) => {
           <LanguageTabs
             activeLang={activeTechLang}
             onLanguageChange={setActiveTechLang}
-            type="technical"
           />
 
           {Object.entries(languages).map(([code, lang]) => (
