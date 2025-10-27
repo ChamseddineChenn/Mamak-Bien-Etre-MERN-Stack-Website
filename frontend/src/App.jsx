@@ -124,7 +124,9 @@ const App = () => {
 
         {!isLoading && (
           <>
-            <Navbar />
+            <div className="no-print">
+              <Navbar />
+            </div>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/collection" element={<Collection />} />
@@ -146,7 +148,9 @@ const App = () => {
               />
               <Route path="/unsubscribe" element={<NewsletterUnsubscribe />} />
             </Routes>
-            <Footer />
+            <div className="no-print">
+              <Footer />
+            </div>
           </>
         )}
       </LanguageProvider>

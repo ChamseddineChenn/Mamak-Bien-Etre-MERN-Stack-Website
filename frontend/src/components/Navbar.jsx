@@ -128,7 +128,7 @@ const Navbar = () => {
               id: itemId,
               name: product.name,
               price: product.price,
-              image: product.image,
+              image: product.image[0],
               quantity,
             }
           : null;

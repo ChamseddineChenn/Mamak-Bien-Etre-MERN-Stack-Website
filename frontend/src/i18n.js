@@ -281,6 +281,13 @@ const resources = {
       delivered: 'Delivered',
       paused: 'Paused',
       cancelled: 'Cancelled',
+      street_placeholder: 'Enter your street address',
+      city_placeholder: 'Enter your city',
+      state_placeholder: 'Enter your state',
+      postal_code_placeholder: 'Enter your postal code',
+      other: 'Other',
+      phone_placeholder: 'Enter your phone number',
+      field_required: 'This field is required',
 
       // OrderConfirmation translations
       thank_you: 'Thank You For Your Order!',
@@ -476,7 +483,7 @@ const resources = {
       about_story_alt: 'Malak Chaherli fabriquant des produits',
       founder_alt: 'Malak Chaherli, Fondatrice de Mamak Bien-Être',
       founder_name: 'Malak Chaherli',
-      founder_title: 'Fondatrice & Artisane Maître',
+      founder_title: 'Fondatrice & Maître Artisane',
       founder_desc_1:
         "Avec une passion de toujours pour les parfums et l'artisanat, Malak a fondé Mamak Bien-Être pour partager sa vision de l'élégance sensorielle. Chaque produit reflète son attention méticuleuse aux détails et son engagement envers la qualité.",
       founder_desc_2:
@@ -622,6 +629,13 @@ const resources = {
       delivered: 'Livrée',
       paused: 'En pause',
       cancelled: 'Annulée',
+      street_placeholder: 'Saisissez votre adresse',
+      city_placeholder: 'Saisissez votre ville',
+      state_placeholder: 'Saisissez votre état ou province',
+      postal_code_placeholder: 'Saisissez votre code postal',
+      other: 'Autre',
+      phone_placeholder: 'Saisissez votre numéro de téléphone',
+      field_required: 'Ce champ est obligatoire',
 
       // OrderConfirmation translations
       thank_you: 'Merci pour votre commande !',
@@ -990,6 +1004,13 @@ const resources = {
       print_receipt: 'Beleg drucken',
       continue_shopping: 'Weiter einkaufen',
       view_my_orders: 'Meine Bestellungen anzeigen',
+      street_placeholder: 'Geben Sie Ihre Straße und Hausnummer ein',
+      city_placeholder: 'Geben Sie Ihre Stadt ein',
+      state_placeholder: 'Geben Sie Ihr Bundesland oder Provinz ein',
+      postal_code_placeholder: 'Geben Sie Ihre Postleitzahl ein',
+      other: 'Andere',
+      phone_placeholder: 'Geben Sie Ihre Telefonnummer ein',
+      field_required: 'Dieses Feld ist erforderlich',
 
       // Newsletter translations
       enter_email_warning: 'Bitte geben Sie Ihre E-Mail-Adresse ein',

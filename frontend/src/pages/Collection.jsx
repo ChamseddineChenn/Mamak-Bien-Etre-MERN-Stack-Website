@@ -112,6 +112,9 @@ const Collection = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
+  // Mobile dropdown states
+  const [mobileDropdown, setMobileDropdown] = useState(null);
+
   //Filters
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -126,6 +129,7 @@ const Collection = () => {
       setCategory(cat);
     }
     setSubCategory('');
+    setMobileDropdown(null);
   };
 
   const displayChosenSubCategory = (cat, subCat) => {
@@ -139,6 +143,7 @@ const Collection = () => {
       setSubCategory('');
       setSubCategory(subCat);
     }
+    setMobileDropdown(null);
   };
 
   const displayCollectionName = () => {
@@ -222,7 +227,6 @@ const Collection = () => {
   useEffect(() => {
     if (location.state?.autoSelectCategory) {
       setCategory(location.state.autoSelectCategory);
-      // Optional: Scroll to top when filter is applied
       window.scrollTo(0, 0);
     }
   }, [location.state]);
@@ -251,7 +255,7 @@ const Collection = () => {
   }, [sortType, products]);
 
   {
-    /* Flyout tag */
+    /* Flyout tag - Desktop version with hover */
   }
   const FlyoutLink = ({ children, href, FlyoutContent }) => {
     const [open, setOpen] = useState(false);
@@ -261,7 +265,7 @@ const Collection = () => {
       <div
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        className="relative h-fit w-fit"
+        className="relative h-fit w-fit hidden sm:block"
       >
         <a className="relative text-[#3A3A3A]" href={href}>
           {children}
@@ -293,7 +297,6 @@ const Collection = () => {
   {
     /* Home Fragrance Content */
   }
-
   const HomeFragranceContent = () => {
     const { t } = useTranslation();
 
@@ -424,7 +427,6 @@ const Collection = () => {
   {
     /* Packs & Sets Content */
   }
-
   const PacksSetsContent = () => {
     const { t } = useTranslation();
 
@@ -477,24 +479,269 @@ const Collection = () => {
 
   return (
     <div className="flex flex-col mt-19.25">
+      {/* Category Navigation Bar */}
       <div className="flex items-center bg-[#E6E4D8] h-15 w-full shadow-md z-45">
-        <div className="flex gap-5 md:gap-20 justify-center md:w-full ps-5 pe-32">
+        {/* Desktop Navigation */}
+        <div className="hidden sm:flex gap-5 md:gap-20 justify-center md:w-full ps-5 pe-32">
           <FlyoutLink href="#" FlyoutContent={HomeFragranceContent}>
             <p onClick={() => displayChosenCategory('Home Fragrance')}>
               {t('home_fragrance')}
             </p>
           </FlyoutLink>
 
-          {/* Packs & Sets with dropdown */}
           <FlyoutLink href="#" FlyoutContent={PacksSetsContent}>
             <p onClick={() => displayChosenCategory('Packs & Sets')}>
               {t('packs_sets')}
             </p>
           </FlyoutLink>
         </div>
+
+        {/* Mobile Navigation */}
+        <div className="sm:hidden w-full px-4">
+          <div className="flex flex-col space-y-2 w-full relative">
+            {/* Home Fragrance Mobile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() =>
+                  setMobileDropdown(
+                    mobileDropdown === 'homeFragrance' ? null : 'homeFragrance'
+                  )
+                }
+                className="w-full flex justify-between items-center py-3 px-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-medium text-[#5C4B42]">
+                  {t('home_fragrance')}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${
+                    mobileDropdown === 'homeFragrance' ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {mobileDropdown === 'homeFragrance' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-32 px-4">
+                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+                    <div className="p-4 space-y-3">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <h2 className="text-lg font-semibold text-[#5C4B42]">
+                          {t('home_fragrance')}
+                        </h2>
+                        <button
+                          onClick={() => setMobileDropdown(null)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                        >
+                          <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Candles Section */}
+                      <div>
+                        <h3 className="font-semibold text-[#5C4B42] mb-2 text-sm border-b pb-1">
+                          Candles
+                        </h3>
+                        <div className="space-y-1">
+                          {[
+                            'Classic Candles',
+                            'Fondant Candles',
+                            'Poured Candle',
+                            'Linen Candle',
+                            'Gemstone Candle',
+                          ].map((subCat) => (
+                            <button
+                              key={subCat}
+                              onClick={() =>
+                                displayChosenSubCategory(
+                                  'Home Fragrance',
+                                  subCat
+                                )
+                              }
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#F5F3EB] rounded-md transition-colors"
+                            >
+                              {t(getCategoryTranslationKey(subCat))}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Pouring Section */}
+                      <div>
+                        <h3 className="font-semibold text-[#5C4B42] mb-2 text-sm border-b pb-1">
+                          Pouring
+                        </h3>
+                        <div className="space-y-1">
+                          {[
+                            'Art Pouring',
+                            'Mug Pouring',
+                            'Decorative Pouring',
+                          ].map((subCat) => (
+                            <button
+                              key={subCat}
+                              onClick={() =>
+                                displayChosenSubCategory(
+                                  'Home Fragrance',
+                                  subCat
+                                )
+                              }
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#F5F3EB] rounded-md transition-colors"
+                            >
+                              {t(getCategoryTranslationKey(subCat))}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Other Section */}
+                      <div>
+                        <h3 className="font-semibold text-[#5C4B42] mb-2 text-sm border-b pb-1">
+                          Other
+                        </h3>
+                        <div className="space-y-1">
+                          {['Diffusers', 'Scents'].map((subCat) => (
+                            <button
+                              key={subCat}
+                              onClick={() =>
+                                displayChosenSubCategory(
+                                  'Home Fragrance',
+                                  subCat
+                                )
+                              }
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#F5F3EB] rounded-md transition-colors"
+                            >
+                              {t(getCategoryTranslationKey(subCat))}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* View All Button */}
+                      <button
+                        onClick={() => displayChosenCategory('Home Fragrance')}
+                        className="w-full mt-4 py-3 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] transition-colors font-medium"
+                      >
+                        {t('view_all')} {t('home_fragrance')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Packs & Sets Mobile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() =>
+                  setMobileDropdown(
+                    mobileDropdown === 'packsSets' ? null : 'packsSets'
+                  )
+                }
+                className="w-full flex justify-between items-center py-3 px-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-medium text-[#5C4B42]">
+                  {t('packs_sets')}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${
+                    mobileDropdown === 'packsSets' ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {mobileDropdown === 'packsSets' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-32 px-4">
+                  <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+                    <div className="p-4 space-y-3">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <h2 className="text-lg font-semibold text-[#5C4B42]">
+                          {t('packs_sets')}
+                        </h2>
+                        <button
+                          onClick={() => setMobileDropdown(null)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                        >
+                          <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div className="space-y-1">
+                        {['Gift', 'House Warming', 'Special Offer'].map(
+                          (subCat) => (
+                            <button
+                              key={subCat}
+                              onClick={() =>
+                                displayChosenSubCategory('Packs & Sets', subCat)
+                              }
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#F5F3EB] rounded-md transition-colors"
+                            >
+                              {t(getCategoryTranslationKey(subCat))}
+                            </button>
+                          )
+                        )}
+                      </div>
+
+                      {/* View All Button */}
+                      <button
+                        onClick={() => displayChosenCategory('Packs & Sets')}
+                        className="w-full mt-4 py-3 bg-[#D6A7A0] text-white rounded-lg hover:bg-[#C79790] transition-colors font-medium"
+                      >
+                        {t('view_all')} {t('packs_sets')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Rest of your original layout */}
       <div className="flex flex-col sm:flex-row mt-5 sm:mt-0 ">
-        {/* Filter */}
+        {/* Filter - Original desktop layout */}
         <div className="self-start min-w-[20vw] w-[70vw] sm:w-[25vw] md:w-[40] h-auto px-10 md:pt-4 md:mt-20 transform -translate-x-[-15vw] sm:-translate-0 md:pb-6 bg-[#E6E4D8] m-2 md:m-5 rounded-2xl transition-all">
           <p
             className="py-2 justify-center text-l md:text-xl flex items-center cursor-pointer gap-10"

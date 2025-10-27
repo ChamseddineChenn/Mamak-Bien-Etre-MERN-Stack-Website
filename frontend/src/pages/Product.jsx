@@ -292,7 +292,7 @@ const Product = () => {
   return productData ? (
     <div className="mt-20 transition-opacity ease-in duration-500 opacity-100 text-[#3A3A3A] ">
       {/* Product Data div */}
-      <div className="flex flex-col-reverse sm:flex-row mx-5">
+      <div className="flex flex-col sm:flex-row mx-5">
         {/* Product image display */}
         <div className="flex-1 flex flex-col aspect-square">
           <div className="my-5 w-full sm:w-[90%]">
@@ -302,7 +302,7 @@ const Product = () => {
               alt=""
             />
           </div>
-          <div className="flex overflow-x-scroll mr-20 gap-3">
+          <div className="flex overflow-x-scroll md:mr-20 gap-3">
             {productData.image.map((item, index) => (
               <img
                 onClick={() => setProductImage(item)}

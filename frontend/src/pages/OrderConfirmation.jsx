@@ -274,7 +274,9 @@ const OrderConfirmation = () => {
 
       <div className="text-center">
         <p className="mb-6">{t('email_confirmation')}</p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <div className="no-print flex flex-col sm:flex-row justify-center gap-4">
+          {' '}
+          {/* Add no-print here */}
           <button
             onClick={() => window.print()}
             className="px-6 py-2 border border-[#A6A58A] text-[#5C4B42] rounded-md hover:bg-[#F5F3EB]"

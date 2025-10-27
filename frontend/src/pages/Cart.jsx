@@ -189,7 +189,7 @@ const Cart = () => {
           </div>
         ) : cartData.length ? (
           // Cart items list
-          <div className="flex flex-col minh-20 mx-20">
+          <div className="flex flex-col minh-20 md:mx-20">
             {cartData.map((item, index) => {
               const productData = products.find(
                 (product) => product._id === item._id
@@ -204,7 +204,7 @@ const Cart = () => {
 
               return (
                 <div className="flex flex-col mx-20" key={index}>
-                  <div className="text-gray-700 grid grid-cols-[4fr_2fr_0.5fr] items-center gap-4 py-4">
+                  <div className="text-gray-700 grid md:grid-cols-[10fr_2fr] items-center gap-4 py-4">
                     {/* Product info */}
                     <div className="flex items-start gap-6">
                       <img
@@ -225,69 +225,71 @@ const Cart = () => {
                     </div>
 
                     {/* Quantity controls */}
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => handleQuantityAdjust(item._id, -1)}
-                        disabled={isPending}
-                        className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
-                          isPending ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        <img
-                          className="min-w-5 w-5 min-h-5 h-5 -rotate-90"
-                          src={assets.arrow_up_icon}
-                          alt={t('decrease_quantity_alt')}
+                    <div className="flex flex-row justify-between gap-5">
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => handleQuantityAdjust(item._id, -1)}
+                          disabled={isPending}
+                          className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
+                            isPending ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <img
+                            className="min-w-5 w-5 min-h-5 h-5 -rotate-90"
+                            src={assets.arrow_up_icon}
+                            alt={t('decrease_quantity_alt')}
+                          />
+                        </button>
+
+                        <input
+                          ref={(el) => (inputRefs.current[item._id] = el)}
+                          className={`border-transparent bg-[#A6A58A]/30 max-w-10 sm:max-w-20 sm:px-2 p-1 text-center rounded-2xl ${
+                            isPending ? 'opacity-50' : ''
+                          }`}
+                          type="number"
+                          min={1}
+                          max={productData.quantity}
+                          value={currentQuantity}
+                          onChange={(e) =>
+                            handleInputChange(item._id, e.target.value)
+                          }
+                          onBlur={() =>
+                            handleQuantityChange(item._id, currentQuantity)
+                          }
+                          onKeyPress={(e) => handleKeyPress(e, item._id)}
+                          disabled={isPending}
                         />
-                      </button>
 
-                      <input
-                        ref={(el) => (inputRefs.current[item._id] = el)}
-                        className={`border-transparent bg-[#A6A58A]/30 max-w-10 sm:max-w-20 sm:px-2 p-1 text-center rounded-2xl ${
-                          isPending ? 'opacity-50' : ''
-                        }`}
-                        type="number"
-                        min={1}
-                        max={productData.quantity}
-                        value={currentQuantity}
-                        onChange={(e) =>
-                          handleInputChange(item._id, e.target.value)
-                        }
-                        onBlur={() =>
-                          handleQuantityChange(item._id, currentQuantity)
-                        }
-                        onKeyPress={(e) => handleKeyPress(e, item._id)}
-                        disabled={isPending}
-                      />
+                        <button
+                          onClick={() => handleQuantityAdjust(item._id, 1)}
+                          disabled={isPending}
+                          className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
+                            isPending ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <img
+                            className="min-w-5 w-5 min-h-5 h-5 rotate-90"
+                            src={assets.arrow_up_icon}
+                            alt={t('increase_quantity_alt')}
+                          />
+                        </button>
+                      </div>
 
+                      {/* Delete button */}
                       <button
-                        onClick={() => handleQuantityAdjust(item._id, 1)}
+                        onClick={() => handleRemoveItem(item._id)}
                         disabled={isPending}
-                        className={`flex items-center justify-center min-w-5 w-5 min-h-5 h-5 ${
+                        className={`flex items-center justify-center w-4 mr-[16vw] sm:w-5 ${
                           isPending ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
                         <img
-                          className="min-w-5 w-5 min-h-5 h-5 rotate-90"
-                          src={assets.arrow_up_icon}
-                          alt={t('increase_quantity_alt')}
+                          className="w-4 sm:w-5"
+                          src={assets.bin_icon}
+                          alt={t('remove_item_alt')}
                         />
                       </button>
                     </div>
-
-                    {/* Delete button */}
-                    <button
-                      onClick={() => handleRemoveItem(item._id)}
-                      disabled={isPending}
-                      className={`flex items-center justify-center w-4 mr-[16vw] sm:w-5 ${
-                        isPending ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <img
-                        className="w-4 sm:w-5"
-                        src={assets.bin_icon}
-                        alt={t('remove_item_alt')}
-                      />
-                    </button>
                   </div>
                   <span className="w-[75vw] border-b border-[#A6A58A] rounded-2xl"></span>
                 </div>
