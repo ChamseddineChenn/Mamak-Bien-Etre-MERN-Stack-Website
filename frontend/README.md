@@ -1,12 +1,30 @@
-# React + Vite
+# Mamak Bien-Être Storefront
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This folder contains the customer-facing storefront for the Mamak Bien-Être e-commerce platform.
 
-Currently, two official plugins are available:
+The storefront is built with React 19, Vite, Tailwind CSS, React Router, Framer Motion, Axios, and i18next.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Main areas
 
-## Expanding the ESLint configuration
+- Product collections and product detail pages
+- Cart and checkout flow
+- Customer login and profile
+- Order history and order confirmation
+- Newsletter confirmation and unsubscribe pages
+- Responsive layouts and translated content
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build and lint
+
+```bash
+npm run build
+npm run lint
+```
+
+The API and administration application are maintained in sibling directories. See the [repository README](../README.md) for the full project overview and backend configuration.
